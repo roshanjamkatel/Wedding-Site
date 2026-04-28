@@ -1,0 +1,6 @@
+# Local environment file — never commit this
+.env
+.env.*
+
+# Local Firebase config override (if you test locally)
+firebase.config.local.js

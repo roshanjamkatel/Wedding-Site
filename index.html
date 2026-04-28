@@ -882,21 +882,21 @@
    Auth:  Firebase Google Sign-In (only roshan.jamkatel@gmail.com)
    Data:  Cloud Firestore  (online, synced across all devices)
 
-   SETUP: Replace the placeholder values in FIREBASE_CONFIG below
-   with your own Firebase project settings.
-   See README.md for the full step-by-step setup guide.
+   SETUP: Add your Firebase config values as GitHub Actions Secrets
+   (see README.md). The workflow will inject them at deploy time.
 ═══════════════════════════════════════════════════════════════════ */
 
 // ── Firebase Configuration ─────────────────────────────────────────
-// IMPORTANT: Replace every "REPLACE_…" value with your real Firebase config.
-// Get these from: Firebase Console → Project Settings → Your Apps → Web App
+// Values are injected at deploy time by GitHub Actions (see .github/workflows/deploy.yml).
+// The %%PLACEHOLDER%% markers below are replaced with real values from GitHub Secrets.
+// Get your values from: Firebase Console → Project Settings → Your Apps → Web App
 const FIREBASE_CONFIG = {
-  apiKey:            "REPLACE_WITH_YOUR_API_KEY",
-  authDomain:        "REPLACE_WITH_YOUR_AUTH_DOMAIN",
-  projectId:         "REPLACE_WITH_YOUR_PROJECT_ID",
-  storageBucket:     "REPLACE_WITH_YOUR_STORAGE_BUCKET",
-  messagingSenderId: "REPLACE_WITH_YOUR_MESSAGING_SENDER_ID",
-  appId:             "REPLACE_WITH_YOUR_APP_ID"
+  apiKey:            "%%FIREBASE_API_KEY%%",
+  authDomain:        "%%FIREBASE_AUTH_DOMAIN%%",
+  projectId:         "%%FIREBASE_PROJECT_ID%%",
+  storageBucket:     "%%FIREBASE_STORAGE_BUCKET%%",
+  messagingSenderId: "%%FIREBASE_MESSAGING_SENDER_ID%%",
+  appId:             "%%FIREBASE_APP_ID%%"
 };
 
 const ALLOWED_EMAIL = 'roshan.jamkatel@gmail.com';
