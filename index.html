@@ -749,6 +749,9 @@
 
     #ptr-indicator.visible { height: 48px; }
 
+    /* ── Error activity dot ──────────────────────────────────────────── */
+    .activity-dot.error { background: var(--danger); }
+
     /* ── Save error toast ────────────────────────────────────────────── */
     #save-toast {
       position: fixed;
@@ -801,7 +804,7 @@
 <div id="ptr-indicator"><div class="spinner"></div><span>Refreshing…</span></div>
 
 <!-- Save error toast -->
-<div id="save-toast">⚠️ Save failed — check your connection</div>
+<div id="save-toast">⚠️ Save failed</div>
 
 <!-- ── App ───────────────────────────────────────────────────────── -->
 <div id="app">
@@ -896,6 +899,10 @@
       <span class="section-title">Recent Activity</span>
     </div>
     <div id="list-activity"></div>
+    <div id="errors-section" style="display:none">
+      <div class="divider-label" style="margin-top:20px;color:var(--danger)">⚠️ Save Errors</div>
+      <div id="list-errors"></div>
+    </div>
   </section>
 
 </div><!-- #app -->
@@ -1028,6 +1035,16 @@ const FIREBASE_CONFIG = {
 };
 
 // ── Firebase Init ──────────────────────────────────────────────────
+// Guard: if secrets were never injected the page shows a clear error instead of cryptic failures
+if (Object.values(FIREBASE_CONFIG).some(v => v.includes('%%'))) {
+  document.getElementById('login-error').textContent =
+    'Firebase is not configured. Please add your Firebase project secrets to GitHub ' +
+    '(FIREBASE_API_KEY, FIREBASE_AUTH_DOMAIN, FIREBASE_PROJECT_ID, FIREBASE_STORAGE_BUCKET, ' +
+    'FIREBASE_MESSAGING_SENDER_ID, FIREBASE_APP_ID) and redeploy.';
+  document.getElementById('login-btn').disabled = true;
+  throw new Error('Firebase config placeholders not replaced — check GitHub Secrets.');
+}
+
 firebase.initializeApp(FIREBASE_CONFIG);
 const auth = firebase.auth();
 const db   = firebase.firestore();
@@ -1059,8 +1076,10 @@ function getCurrentUserIdentifier() {
 
 // ── State ──────────────────────────────────────────────────────────
 let guests = [];
+let errorLogs = [];
 let currentUser = null;
 let unsubscribeSnapshot = null;
+let unsubscribeErrors = null;
 
 function sharedDocRef() {
   return db.collection('shared').doc('guestList');
@@ -1089,10 +1108,40 @@ function subscribeToGuests(onReady) {
   });
 }
 
-function showSaveToast() {
+function showSaveToast(detail) {
   const toastEl = document.getElementById('save-toast');
+  toastEl.textContent = '⚠️ Save failed' + (detail ? ': ' + detail : ' — check your connection');
   toastEl.classList.add('show');
-  setTimeout(() => toastEl.classList.remove('show'), 3500);
+  setTimeout(() => toastEl.classList.remove('show'), 4500);
+}
+
+async function logErrorToFirestore(info) {
+  if (!currentUser) return;
+  try {
+    await db.collection('errors').add({
+      message: info.message || 'Unknown error',
+      code:    info.code    || '',
+      context: info.context || '',
+      user:    getCurrentUserIdentifier(),
+      timestamp: Date.now()
+    });
+  } catch (e) {
+    // Best-effort — silently ignore if we can't reach Firestore
+    console.warn('Could not log error to Firestore:', e);
+  }
+}
+
+function subscribeToErrors() {
+  if (unsubscribeErrors) { unsubscribeErrors(); unsubscribeErrors = null; }
+  unsubscribeErrors = db.collection('errors')
+    .orderBy('timestamp', 'desc')
+    .limit(50)
+    .onSnapshot(snap => {
+      errorLogs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      renderActivity();
+    }, err => {
+      console.error('Errors listener failed:', err);
+    });
 }
 
 async function saveGuests() {
@@ -1101,7 +1150,9 @@ async function saveGuests() {
     await sharedDocRef().set({ guests });
   } catch (e) {
     console.error('Failed to save guests', e);
-    showSaveToast();
+    const msg = e.message || e.code || 'Unknown error';
+    showSaveToast(msg);
+    logErrorToFirestore({ message: msg, code: e.code || '', context: 'saveGuests' });
   }
 }
 
@@ -1134,6 +1185,7 @@ function showApp(user) {
     loginScreen.style.display = 'none';
     appEl.style.display = 'flex';
     document.getElementById('fab-wrap').style.display = 'flex';
+    subscribeToErrors();
   });
 }
 
@@ -1142,6 +1194,10 @@ function showLogin() {
     unsubscribeSnapshot();
     unsubscribeSnapshot = null;
   }
+  if (unsubscribeErrors) {
+    unsubscribeErrors();
+    unsubscribeErrors = null;
+  }
   appEl.style.display = 'none';
   document.getElementById('fab-wrap').style.display = 'none';
   loginScreen.style.display = 'flex';
@@ -1149,6 +1205,7 @@ function showLogin() {
   const loginBtn = document.getElementById('login-btn');
   if (loginBtn) loginBtn.disabled = false;
   guests = [];
+  errorLogs = [];
 }
 
 // Show loading while Firebase resolves auth state
@@ -1322,37 +1379,58 @@ function deleteGuest(id) {
   renderAll();
 }
 
+function timeAgo(ts) {
+  const secs = Math.floor((Date.now() - ts) / 1000);
+  if (secs < 60)    return 'just now';
+  if (secs < 3600)  return Math.floor(secs / 60) + 'm ago';
+  if (secs < 86400) return Math.floor(secs / 3600) + 'h ago';
+  const d = new Date(ts);
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 function renderActivity() {
   const container = document.getElementById('list-activity');
+  const errorsSection = document.getElementById('errors-section');
+  const errorsContainer = document.getElementById('list-errors');
   const sorted = guests.slice().filter(g => g.addedAt).sort((a, b) => b.addedAt - a.addedAt);
 
   if (sorted.length === 0) {
     container.innerHTML = `<div class="empty-state"><div class="es-icon">📋</div><p>No activity yet.<br>Add guests to see who added them here.</p></div>`;
-    return;
-  }
-
-  function timeAgo(ts) {
-    const secs = Math.floor((Date.now() - ts) / 1000);
-    if (secs < 60)   return 'just now';
-    if (secs < 3600) return Math.floor(secs / 60) + 'm ago';
-    if (secs < 86400) return Math.floor(secs / 3600) + 'h ago';
-    const d = new Date(ts);
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-  }
-
-  container.innerHTML = sorted.map(g => `
-    <div class="activity-item">
-      <div class="activity-dot ${g.side}"></div>
-      <div class="activity-body">
-        <div class="activity-text">
-          <strong>${escHtml(g.addedBy || 'Unknown')}</strong> added
-          <strong>${escHtml(g.name)}</strong>
-          <span style="color:var(--text-s)">(${g.side === 'roshan' ? "Roshan's side" : "Anuja's side"})</span>
+  } else {
+    container.innerHTML = sorted.map(g => `
+      <div class="activity-item">
+        <div class="activity-dot ${g.side}"></div>
+        <div class="activity-body">
+          <div class="activity-text">
+            <strong>${escHtml(g.addedBy || 'Unknown')}</strong> added
+            <strong>${escHtml(g.name)}</strong>
+            <span style="color:var(--text-s)">(${g.side === 'roshan' ? "Roshan's side" : "Anuja's side"})</span>
+          </div>
+          <div class="activity-time">${timeAgo(g.addedAt)}</div>
         </div>
-        <div class="activity-time">${timeAgo(g.addedAt)}</div>
       </div>
-    </div>
-  `).join('');
+    `).join('');
+  }
+
+  // Errors sub-section
+  if (errorLogs.length > 0) {
+    errorsSection.style.display = 'block';
+    errorsContainer.innerHTML = errorLogs.map(e => `
+      <div class="activity-item">
+        <div class="activity-dot error"></div>
+        <div class="activity-body">
+          <div class="activity-text">
+            <strong>${escHtml(e.user || 'Unknown')}</strong> — <em>${escHtml(e.context || 'save')}</em> failed:
+            <span style="color:var(--danger)">${escHtml(e.message || 'Unknown error')}</span>
+            ${e.code ? `<span style="color:var(--text-s);font-size:.8em">[${escHtml(e.code)}]</span>` : ''}
+          </div>
+          <div class="activity-time">${timeAgo(e.timestamp)}</div>
+        </div>
+      </div>
+    `).join('');
+  } else {
+    errorsSection.style.display = 'none';
+  }
 }
 
 /* ── FAB ─────────────────────────────────────────────────────────── */
