@@ -23,26 +23,26 @@ You need a free Firebase project to run this app. Follow these steps once.
 2. Give the app a nickname → click **Register app**
 3. Copy the `firebaseConfig` object shown — you'll need these values in the next step
 
-### 3 — Put your config in `index.html`
+### 3 — Store your Firebase config as GitHub Actions Secrets
 
-Open `index.html` and find this block near the bottom:
+Because this is a public repository, the real Firebase config is kept out of source
+control and injected at deploy time by GitHub Actions.
 
-```js
-const FIREBASE_CONFIG = {
-  apiKey:            "REPLACE_WITH_YOUR_API_KEY",
-  authDomain:        "REPLACE_WITH_YOUR_AUTH_DOMAIN",
-  projectId:         "REPLACE_WITH_YOUR_PROJECT_ID",
-  storageBucket:     "REPLACE_WITH_YOUR_STORAGE_BUCKET",
-  messagingSenderId: "REPLACE_WITH_YOUR_MESSAGING_SENDER_ID",
-  appId:             "REPLACE_WITH_YOUR_APP_ID"
-};
-```
+1. Go to your repo on GitHub → **Settings** → **Secrets and variables** → **Actions**
+2. Click **New repository secret** and add each of the following:
 
-Replace every `"REPLACE_…"` string with the matching value from your Firebase config.
+   | Secret name                  | Where to find the value                                   |
+   |------------------------------|-----------------------------------------------------------|
+   | `FIREBASE_API_KEY`           | Firebase Console → Project Settings → Your Apps → Web App |
+   | `FIREBASE_AUTH_DOMAIN`       | same                                                      |
+   | `FIREBASE_PROJECT_ID`        | same                                                      |
+   | `FIREBASE_STORAGE_BUCKET`    | same                                                      |
+   | `FIREBASE_MESSAGING_SENDER_ID` | same                                                    |
+   | `FIREBASE_APP_ID`            | same                                                      |
 
-> **Note:** Firebase config values are *not* secrets — they are intentionally embedded in
-> client-side code. Security is enforced by Firestore Security Rules and Firebase Auth,
-> not by hiding the config.
+The deploy workflow (`.github/workflows/deploy.yml`) reads these secrets and replaces the
+`%%PLACEHOLDER%%` markers in `index.html` before uploading to GitHub Pages. The real
+values are never stored in the repository.
 
 ### 4 — Enable Google Sign-In
 
@@ -81,8 +81,17 @@ write any data, even if someone finds your Firebase config.
 
 ### 8 — Deploy to GitHub Pages
 
-Push your changes. Enable **GitHub Pages** in the repo Settings (source: `main` branch,
-root `/`). Your site will be live at `https://<your-username>.github.io/Wedding-Site/`.
+Push your changes. Enable **GitHub Pages** in the repo Settings:
+
+1. Go to **Settings** → **Pages**
+2. Set **Source** to **GitHub Actions**
+
+Every push to `main` will now trigger the deploy workflow, which injects your Firebase
+config from secrets and publishes the site to
+`https://<your-username>.github.io/Wedding-Site/`.
+
+You can also trigger a deploy manually from the **Actions** tab →
+**Deploy to GitHub Pages** → **Run workflow**.
 
 ---
 
