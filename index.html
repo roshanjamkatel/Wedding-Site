@@ -1106,7 +1106,8 @@ function subscribeToGuests(onReady) {
     }
   }, err => {
     console.error('Firestore listen error', err);
-    saveError('subscribeToGuests', err);
+    showSaveToast('⚠️ Could not connect to database — changes may not sync');
+    if (currentUser) saveError('subscribeToGuests', err);
     if (firstSnapshot) {
       firstSnapshot = false;
       if (onReady) onReady();
@@ -1122,6 +1123,7 @@ function showSaveToast(message) {
 }
 
 async function saveError(operation, error) {
+  if (!currentUser) return;
   try {
     await db.collection('errors').add({
       operation: operation,
