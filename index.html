@@ -749,6 +749,11 @@
 
     #ptr-indicator.visible { height: 48px; }
 
+    /* ── Error item in Activity tab ──────────────────────────────────── */
+    .activity-dot.error { background: var(--danger); }
+
+    #errors-section { margin-top: 24px; }
+
     /* ── Save error toast ────────────────────────────────────────────── */
     #save-toast {
       position: fixed;
@@ -896,6 +901,13 @@
       <span class="section-title">Recent Activity</span>
     </div>
     <div id="list-activity"></div>
+
+    <div id="errors-section">
+      <div class="section-header" style="margin-bottom:12px">
+        <span class="section-title">⚠️ Save Errors</span>
+      </div>
+      <div id="list-errors"></div>
+    </div>
   </section>
 
 </div><!-- #app -->
@@ -1032,6 +1044,16 @@ firebase.initializeApp(FIREBASE_CONFIG);
 const auth = firebase.auth();
 const db   = firebase.firestore();
 
+// Detect uninjected placeholders (deployment without secrets configured)
+(function checkConfig() {
+  if (Object.values(FIREBASE_CONFIG).some(v => String(v).includes('%%'))) {
+    const el = document.getElementById('login-error');
+    el.textContent = '⚠️ Firebase is not configured. Please configure your Firebase credentials and redeploy (see README).';
+    const btn = document.getElementById('login-btn');
+    if (btn) btn.disabled = true;
+  }
+})();
+
 // Enable offline persistence — data loads from local cache on repeat visits
 db.enablePersistence({ synchronizeTabs: true }).catch(err => {
   if (err.code !== 'failed-precondition' && err.code !== 'unimplemented') {
@@ -1061,6 +1083,8 @@ function getCurrentUserIdentifier() {
 let guests = [];
 let currentUser = null;
 let unsubscribeSnapshot = null;
+let unsubscribeErrors = null;
+let recentErrors = [];
 
 function sharedDocRef() {
   return db.collection('shared').doc('guestList');
@@ -1082,6 +1106,7 @@ function subscribeToGuests(onReady) {
     }
   }, err => {
     console.error('Firestore listen error', err);
+    saveError('subscribeToGuests', err);
     if (firstSnapshot) {
       firstSnapshot = false;
       if (onReady) onReady();
@@ -1089,10 +1114,26 @@ function subscribeToGuests(onReady) {
   });
 }
 
-function showSaveToast() {
+function showSaveToast(message) {
   const toastEl = document.getElementById('save-toast');
+  toastEl.textContent = message || '⚠️ Save failed — check your connection';
   toastEl.classList.add('show');
-  setTimeout(() => toastEl.classList.remove('show'), 3500);
+  setTimeout(() => toastEl.classList.remove('show'), 4000);
+}
+
+async function saveError(operation, error) {
+  try {
+    await db.collection('errors').add({
+      operation: operation,
+      message:   error.message || String(error),
+      code:      error.code    || 'unknown',
+      user:      getCurrentUserIdentifier(),
+      userId:    currentUser ? currentUser.uid : null,
+      timestamp: Date.now()
+    });
+  } catch (e) {
+    console.error('Could not save error to database', e);
+  }
 }
 
 async function saveGuests() {
@@ -1101,7 +1142,9 @@ async function saveGuests() {
     await sharedDocRef().set({ guests });
   } catch (e) {
     console.error('Failed to save guests', e);
-    showSaveToast();
+    const msg = '⚠️ Save failed: ' + (e.message || 'Please try again');
+    showSaveToast(msg);
+    await saveError('saveGuests', e);
   }
 }
 
@@ -1113,6 +1156,48 @@ const loginErrorEl = document.getElementById('login-error');
 
 function showLoading() { loadingEl.style.display = 'flex'; }
 function hideLoading() { loadingEl.style.display = 'none'; }
+
+function timeAgo(ts) {
+  const secs = Math.floor((Date.now() - ts) / 1000);
+  if (secs < 60)    return 'just now';
+  if (secs < 3600)  return Math.floor(secs / 60) + 'm ago';
+  if (secs < 86400) return Math.floor(secs / 3600) + 'h ago';
+  const d = new Date(ts);
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// ── Error listener & renderer ──────────────────────────────────────
+function subscribeToErrors() {
+  if (unsubscribeErrors) { unsubscribeErrors(); unsubscribeErrors = null; }
+  unsubscribeErrors = db.collection('errors')
+    .orderBy('timestamp', 'desc')
+    .limit(50)
+    .onSnapshot(snap => {
+      recentErrors = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+      renderErrors();
+    }, err => {
+      console.error('Errors listener failed', err);
+    });
+}
+
+function renderErrors() {
+  const container = document.getElementById('list-errors');
+  if (recentErrors.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="es-icon">✅</div><p>No errors logged.</p></div>`;
+    return;
+  }
+  container.innerHTML = recentErrors.map(e => `
+    <div class="activity-item">
+      <div class="activity-dot error"></div>
+      <div class="activity-body">
+        <div class="activity-text">
+          <strong>${escHtml(e.operation || 'unknown')}</strong>: ${escHtml(e.message || 'Unknown error')}
+        </div>
+        <div class="activity-time">by ${escHtml(e.user || 'Unknown')} · ${timeAgo(e.timestamp)}</div>
+      </div>
+    </div>
+  `).join('');
+}
 
 // ── Authentication ─────────────────────────────────────────────────
 async function signInWithGoogle() {
@@ -1135,6 +1220,7 @@ function showApp(user) {
     appEl.style.display = 'flex';
     document.getElementById('fab-wrap').style.display = 'flex';
   });
+  subscribeToErrors();
 }
 
 function showLogin() {
@@ -1142,6 +1228,11 @@ function showLogin() {
     unsubscribeSnapshot();
     unsubscribeSnapshot = null;
   }
+  if (unsubscribeErrors) {
+    unsubscribeErrors();
+    unsubscribeErrors = null;
+  }
+  recentErrors = [];
   appEl.style.display = 'none';
   document.getElementById('fab-wrap').style.display = 'none';
   loginScreen.style.display = 'flex';
@@ -1329,15 +1420,6 @@ function renderActivity() {
   if (sorted.length === 0) {
     container.innerHTML = `<div class="empty-state"><div class="es-icon">📋</div><p>No activity yet.<br>Add guests to see who added them here.</p></div>`;
     return;
-  }
-
-  function timeAgo(ts) {
-    const secs = Math.floor((Date.now() - ts) / 1000);
-    if (secs < 60)   return 'just now';
-    if (secs < 3600) return Math.floor(secs / 60) + 'm ago';
-    if (secs < 86400) return Math.floor(secs / 3600) + 'h ago';
-    const d = new Date(ts);
-    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
   container.innerHTML = sorted.map(g => `
