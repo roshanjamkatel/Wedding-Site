@@ -652,6 +652,60 @@
       color: var(--text-s);
     }
 
+    /* Activity */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .section-title {
+      font-size: .78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text-s);
+    }
+
+    .activity-item {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      box-shadow: 0 1px 6px rgba(0,0,0,.06);
+      margin-bottom: 8px;
+    }
+
+    .activity-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--primary);
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+
+    .activity-dot.roshan { background: var(--primary); }
+    .activity-dot.anuja  { background: #b07fa8; }
+
+    .activity-body { flex: 1; min-width: 0; }
+
+    .activity-text {
+      font-size: .88rem;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    .activity-text strong { font-weight: 700; }
+
+    .activity-time {
+      font-size: .72rem;
+      color: var(--text-s);
+      margin-top: 3px;
+    }
+
     .divider-label {
       display: flex;
       align-items: center;
@@ -713,6 +767,7 @@
     <button class="tab-btn"        data-tab="reception"  role="tab">Reception</button>
     <button class="tab-btn"        data-tab="engagement" role="tab">Engagement</button>
     <button class="tab-btn"        data-tab="guests"     role="tab">All Guests</button>
+    <button class="tab-btn"        data-tab="activity"   role="tab">Activity</button>
   </nav>
 
   <!-- Wedding Tab -->
@@ -779,6 +834,14 @@
       </div>
       <div class="guest-list" id="list-all"></div>
     </div>
+  </section>
+
+  <!-- Activity Tab -->
+  <section class="tab-content" id="tab-activity">
+    <div class="section-header" style="margin-bottom:12px">
+      <span class="section-title">Recent Activity</span>
+    </div>
+    <div id="list-activity"></div>
   </section>
 
 </div><!-- #app -->
@@ -929,6 +992,10 @@ function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+function getCurrentUserIdentifier() {
+  return currentUser?.displayName || currentUser?.email || 'Unknown';
+}
+
 // ── State ──────────────────────────────────────────────────────────
 let guests = [];
 let currentUser = null;
@@ -972,7 +1039,7 @@ async function signInWithGoogle() {
   document.getElementById('login-btn').disabled = true;
   try {
     const provider = new firebase.auth.GoogleAuthProvider();
-    await auth.signInWithRedirect(provider);
+    await auth.signInWithPopup(provider);
   } catch (e) {
     loginErrorEl.textContent = 'Sign-in failed. Please try again.';
     document.getElementById('login-btn').disabled = false;
@@ -999,13 +1066,8 @@ function showLogin() {
   guests = [];
 }
 
-// Show loading while Firebase resolves auth state / redirect result
+// Show loading while Firebase resolves auth state
 showLoading();
-
-// Catch any errors that came back from the Google redirect
-auth.getRedirectResult().catch(e => {
-  loginErrorEl.textContent = 'Sign-in failed. Please try again.';
-});
 
 // Listen for auth state changes
 auth.onAuthStateChanged(async user => {
@@ -1063,6 +1125,7 @@ function renderAll() {
   renderEventTab('reception');
   renderEventTab('engagement');
   renderAllGuests();
+  renderActivity();
 }
 
 function renderEventTab(event) {
@@ -1174,6 +1237,39 @@ function deleteGuest(id) {
   renderAll();
 }
 
+function renderActivity() {
+  const container = document.getElementById('list-activity');
+  const sorted = guests.slice().filter(g => g.addedAt).sort((a, b) => b.addedAt - a.addedAt);
+
+  if (sorted.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="es-icon">📋</div><p>No activity yet.<br>Add guests to see who added them here.</p></div>`;
+    return;
+  }
+
+  function timeAgo(ts) {
+    const secs = Math.floor((Date.now() - ts) / 1000);
+    if (secs < 60)   return 'just now';
+    if (secs < 3600) return Math.floor(secs / 60) + 'm ago';
+    if (secs < 86400) return Math.floor(secs / 3600) + 'h ago';
+    const d = new Date(ts);
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  container.innerHTML = sorted.map(g => `
+    <div class="activity-item">
+      <div class="activity-dot ${g.side}"></div>
+      <div class="activity-body">
+        <div class="activity-text">
+          <strong>${escHtml(g.addedBy || 'Unknown')}</strong> added
+          <strong>${escHtml(g.name)}</strong>
+          <span style="color:var(--text-s)">(${g.side === 'roshan' ? "Roshan's side" : "Anuja's side"})</span>
+        </div>
+        <div class="activity-time">${timeAgo(g.addedAt)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
 /* ── FAB ─────────────────────────────────────────────────────────── */
 const fabMain  = document.getElementById('fab-main');
 const fabMenu  = document.getElementById('fab-menu');
@@ -1223,7 +1319,7 @@ document.getElementById('modal-add-save').addEventListener('click', () => {
   const events = ['wedding','reception','engagement'].filter(ev =>
     document.getElementById('add-ev-' + ev).checked
   );
-  guests.push({ id: uid(), name, side, events });
+  guests.push({ id: uid(), name, side, events, addedBy: getCurrentUserIdentifier(), addedAt: Date.now() });
   saveGuests();
   closeModal('modal-add');
   renderAll();
@@ -1254,7 +1350,9 @@ document.getElementById('modal-bulk-save').addEventListener('click', () => {
   const events = ['wedding','reception','engagement'].filter(ev =>
     document.getElementById('bulk-ev-' + ev).checked
   );
-  names.forEach(name => guests.push({ id: uid(), name, side, events }));
+  const addedBy = getCurrentUserIdentifier();
+  const addedAt = Date.now();
+  names.forEach(name => guests.push({ id: uid(), name, side, events, addedBy, addedAt }));
   saveGuests();
   closeModal('modal-bulk');
   renderAll();
