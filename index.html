@@ -124,23 +124,34 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
+      gap: 12px;
       width: 100%;
-      padding: 13px 16px;
+      padding: 0 20px;
+      height: 50px;
       background: #fff;
       color: #3c4043;
-      border: 1.5px solid #dadce0;
+      border: none;
       border-radius: var(--radius);
-      font-size: .95rem;
-      font-weight: 600;
+      font-size: 1rem;
+      font-weight: 500;
       cursor: pointer;
-      transition: background .15s, box-shadow .15s;
+      transition: box-shadow .2s, background .15s;
       font-family: inherit;
-      letter-spacing: .01em;
+      letter-spacing: .02em;
+      box-shadow: 0 1px 4px rgba(0,0,0,.15), 0 0 0 1.5px #dadce0;
     }
 
-    .btn-google:hover:not(:disabled) { background: #f8f9fa; box-shadow: 0 1px 6px rgba(0,0,0,.15); }
-    .btn-google:disabled { opacity: .7; cursor: not-allowed; }
+    .btn-google:hover:not(:disabled) {
+      background: #f7f8f8;
+      box-shadow: 0 3px 12px rgba(0,0,0,.18), 0 0 0 1.5px #c5c8cd;
+    }
+    .btn-google:active:not(:disabled) {
+      background: #f1f3f4;
+      box-shadow: 0 1px 3px rgba(0,0,0,.1), 0 0 0 1.5px #dadce0;
+    }
+    .btn-google:disabled { opacity: .65; cursor: not-allowed; }
+
+    .google-btn-label { flex: 1; text-align: center; }
 
     #loading-overlay {
       position: fixed;
@@ -669,11 +680,11 @@
   <div class="login-card">
     <div class="login-emoji">💍</div>
     <h1>Roshan &amp; Anuja</h1>
-    <p>Wedding Planner</p>
+    <p>Sign in to manage our wedding guest list</p>
     <div class="login-error" id="login-error"></div>
     <button class="btn-google" id="login-btn">
-      <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></g></svg>
-      Sign in with Google
+      <svg width="20" height="20" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></g></svg>
+      <span class="google-btn-label">Sign in with Google</span>
     </button>
   </div>
 </div>
@@ -773,7 +784,7 @@
 </div><!-- #app -->
 
 <!-- FAB -->
-<div class="fab-wrap" id="fab-wrap">
+<div class="fab-wrap" id="fab-wrap" style="display:none">
   <div class="fab-menu" id="fab-menu">
     <div class="fab-item" id="fab-bulk">
       <span class="fab-label">Bulk Add</span>
@@ -879,8 +890,8 @@
 <script>
 /* ═══════════════════════════════════════════════════════════════════
    Wedding Planner — Roshan & Anuja
-   Auth:  Firebase Google Sign-In (only roshan.jamkatel@gmail.com)
-   Data:  Cloud Firestore  (online, synced across all devices)
+   Auth:  Firebase Google Sign-In (any authenticated Google account)
+   Data:  Cloud Firestore  (shared, online, synced across all devices)
 
    SETUP: Add your Firebase config values as GitHub Actions Secrets
    (see README.md). The workflow will inject them at deploy time.
@@ -898,8 +909,6 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "%%FIREBASE_MESSAGING_SENDER_ID%%",
   appId:             "%%FIREBASE_APP_ID%%"
 };
-
-const ALLOWED_EMAIL = 'roshan.jamkatel@gmail.com';
 
 // ── Firebase Init ──────────────────────────────────────────────────
 firebase.initializeApp(FIREBASE_CONFIG);
@@ -924,13 +933,13 @@ function escHtml(s) {
 let guests = [];
 let currentUser = null;
 
-function guestDocRef(user) {
-  return db.collection('users').doc(user.uid);
+function sharedDocRef() {
+  return db.collection('shared').doc('guestList');
 }
 
-async function loadGuests(user) {
+async function loadGuests() {
   try {
-    const snap = await guestDocRef(user).get();
+    const snap = await sharedDocRef().get();
     if (snap.exists) return snap.data().guests || [];
     return [];
   } catch (e) {
@@ -942,7 +951,7 @@ async function loadGuests(user) {
 async function saveGuests() {
   if (!currentUser) return;
   try {
-    await guestDocRef(currentUser).set({ guests });
+    await sharedDocRef().set({ guests });
   } catch (e) {
     console.error('Failed to save guests', e);
   }
@@ -963,27 +972,26 @@ async function signInWithGoogle() {
   document.getElementById('login-btn').disabled = true;
   try {
     const provider = new firebase.auth.GoogleAuthProvider();
-    provider.setCustomParameters({ login_hint: ALLOWED_EMAIL });
-    await auth.signInWithPopup(provider);
+    await auth.signInWithRedirect(provider);
   } catch (e) {
-    if (e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') {
-      loginErrorEl.textContent = 'Sign-in failed. Please try again.';
-    }
+    loginErrorEl.textContent = 'Sign-in failed. Please try again.';
     document.getElementById('login-btn').disabled = false;
   }
 }
 
 async function showApp(user) {
   showLoading();
-  guests = await loadGuests(user);
+  guests = await loadGuests();
   hideLoading();
   loginScreen.style.display = 'none';
   appEl.style.display = 'flex';
+  document.getElementById('fab-wrap').style.display = 'flex';
   renderAll();
 }
 
 function showLogin() {
   appEl.style.display = 'none';
+  document.getElementById('fab-wrap').style.display = 'none';
   loginScreen.style.display = 'flex';
   loginErrorEl.textContent = '';
   const loginBtn = document.getElementById('login-btn');
@@ -991,20 +999,22 @@ function showLogin() {
   guests = [];
 }
 
+// Show loading while Firebase resolves auth state / redirect result
+showLoading();
+
+// Catch any errors that came back from the Google redirect
+auth.getRedirectResult().catch(e => {
+  loginErrorEl.textContent = 'Sign-in failed. Please try again.';
+});
+
 // Listen for auth state changes
 auth.onAuthStateChanged(async user => {
   if (user) {
-    if (user.email === ALLOWED_EMAIL) {
-      currentUser = user;
-      await showApp(user);
-    } else {
-      // Wrong account — sign out immediately
-      await auth.signOut();
-      loginErrorEl.textContent = 'Access denied. Only the authorized account may sign in.';
-      showLogin();
-    }
+    currentUser = user;
+    await showApp(user);
   } else {
     currentUser = null;
+    hideLoading();
     showLogin();
   }
 });
