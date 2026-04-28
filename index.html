@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Roshan &amp; Anuja</title>
   <style>
     /* ── Reset & Variables ───────────────────────────────────────── */
@@ -832,11 +832,12 @@ const SESSION_KEY = 'weddingSession';
 
 /* ── Helpers ─────────────────────────────────────────────────────── */
 function uid() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2);
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  return Date.now().toString(36) + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
 }
 
 function initials(name) {
-  return name.split(' ').slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || '?';
+  return name.split(' ').slice(0, 2).map(w => w?.[0] || '').join('').toUpperCase() || '?';
 }
 
 /* ── State ───────────────────────────────────────────────────────── */
