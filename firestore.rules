@@ -1,7 +1,7 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Only the authorised user can read or write their own data.
+    // Only the authorized user can read or write their own data.
     // All other users (including unauthenticated visitors) are denied.
     match /users/{userId} {
       allow read, write: if request.auth != null

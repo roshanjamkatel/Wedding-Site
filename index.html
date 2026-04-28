@@ -1000,7 +1000,7 @@ auth.onAuthStateChanged(async user => {
     } else {
       // Wrong account — sign out immediately
       await auth.signOut();
-      loginErrorEl.textContent = 'Access denied. Only the authorised account may sign in.';
+      loginErrorEl.textContent = 'Access denied. Only the authorized account may sign in.';
       showLogin();
     }
   } else {
