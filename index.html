@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Roshan &amp; Anuja</title>
+  <style>
+    /* ── Reset & Variables ───────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #fdf8f4;
+      --surface:   #ffffff;
+      --primary:   #9b7e6e;
+      --primary-l: #c4a494;
+      --accent:    #e8d5c8;
+      --text:      #3a2e28;
+      --text-s:    #7a6861;
+      --border:    #ede0d8;
+      --danger:    #c0392b;
+      --radius:    14px;
+      --shadow:    0 2px 16px rgba(0,0,0,.08);
+    }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Login Screen ────────────────────────────────────────────── */
+    #login-screen {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: linear-gradient(160deg, #f9ede4 0%, #fdf8f4 60%);
+    }
+
+    .login-card {
+      background: var(--surface);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 40px 28px 36px;
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+    }
+
+    .login-emoji { font-size: 2.4rem; margin-bottom: 10px; }
+
+    .login-card h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .login-card p {
+      font-size: .85rem;
+      color: var(--text-s);
+      margin-bottom: 28px;
+    }
+
+    .input-wrap { position: relative; margin-bottom: 14px; }
+
+    .input-wrap input {
+      width: 100%;
+      padding: 14px 44px 14px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 1rem;
+      color: var(--text);
+      background: var(--bg);
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    .input-wrap input:focus { border-color: var(--primary); }
+
+    .toggle-pw {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.1rem;
+      color: var(--text-s);
+      line-height: 1;
+    }
+
+    .login-error {
+      font-size: .8rem;
+      color: var(--danger);
+      margin-bottom: 12px;
+      min-height: 16px;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s, transform .1s;
+      letter-spacing: .02em;
+    }
+
+    .btn-primary:active { transform: scale(.98); }
+    .btn-primary:hover  { background: var(--primary-l); }
+
+    /* ── App Shell ───────────────────────────────────────────────── */
+    #app { display: none; min-height: 100dvh; flex-direction: column; }
+
+    /* Header */
+    .app-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 20px 14px;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .app-header h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+    }
+
+    .app-header p {
+      font-size: .75rem;
+      color: var(--text-s);
+      margin-top: 2px;
+    }
+
+    .header-actions {
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    .btn-icon {
+      background: none;
+      border: none;
+      font-size: 1.3rem;
+      cursor: pointer;
+      color: var(--text-s);
+      padding: 4px;
+    }
+
+    /* Tabs */
+    .tab-bar {
+      display: flex;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 65px;
+      z-index: 19;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px 4px;
+      border: none;
+      background: none;
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--text-s);
+      cursor: pointer;
+      border-bottom: 2.5px solid transparent;
+      transition: color .2s, border-color .2s;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    /* Content */
+    .tab-content { display: none; padding: 16px 16px 100px; flex: 1; }
+    .tab-content.active { display: block; }
+
+    /* Stats bar */
+    .stats-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .stat-pill {
+      flex: 1;
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 12px 10px;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+
+    .stat-pill .num {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--primary);
+      line-height: 1;
+    }
+
+    .stat-pill .lbl {
+      font-size: .68rem;
+      color: var(--text-s);
+      margin-top: 3px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    /* Filter chips */
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .filter-row::-webkit-scrollbar { display: none; }
+
+    .chip {
+      flex-shrink: 0;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--text-s);
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+
+    .chip.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    /* Guest list */
+    .guest-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .guest-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 14px 14px 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 1px 6px rgba(0,0,0,.06);
+      transition: opacity .15s;
+    }
+
+    .guest-card.excluded { opacity: .5; }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .85rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      color: #fff;
+    }
+
+    .avatar.roshan { background: var(--primary); }
+    .avatar.anuja  { background: #b07fa8; }
+
+    .guest-info { flex: 1; min-width: 0; }
+
+    .guest-name {
+      font-size: .92rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .guest-meta {
+      font-size: .72rem;
+      color: var(--text-s);
+      margin-top: 2px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--border);
+      border-radius: 24px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      left: 3px;
+      top: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform .2s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+
+    .toggle-switch input:checked + .toggle-slider { background: var(--primary); }
+    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+    .btn-del {
+      background: none;
+      border: none;
+      font-size: 1.1rem;
+      cursor: pointer;
+      color: #ccc;
+      padding: 4px;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .btn-del:hover { color: var(--danger); }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px 16px;
+      color: var(--text-s);
+    }
+
+    .empty-state .es-icon { font-size: 2.5rem; margin-bottom: 10px; }
+    .empty-state p { font-size: .88rem; }
+
+    /* FAB */
+    .fab-wrap {
+      position: fixed;
+      bottom: 28px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+      z-index: 30;
+    }
+
+    .fab-menu {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(8px);
+      transition: opacity .2s, transform .2s;
+    }
+
+    .fab-menu.open {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .fab-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .fab-label {
+      background: var(--surface);
+      color: var(--text);
+      font-size: .82rem;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      white-space: nowrap;
+    }
+
+    .fab-icon-btn {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: var(--shadow);
+    }
+
+    .fab-icon-btn.roshan-btn { background: var(--primary); color: #fff; }
+    .fab-icon-btn.anuja-btn  { background: #b07fa8; color: #fff; }
+    .fab-icon-btn.bulk-btn   { background: #5a7fa8; color: #fff; }
+
+    .fab-main {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: none;
+      color: #fff;
+      font-size: 1.6rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(155,126,110,.45);
+      cursor: pointer;
+      transition: transform .2s, background .2s;
+    }
+
+    .fab-main.open { background: var(--text); transform: rotate(45deg); }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.4);
+      z-index: 50;
+      display: flex;
+      align-items: flex-end;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal {
+      background: var(--surface);
+      border-radius: 24px 24px 0 0;
+      padding: 20px 20px 36px;
+      width: 100%;
+      transform: translateY(100%);
+      transition: transform .25s cubic-bezier(.4,0,.2,1);
+    }
+
+    .modal-overlay.open .modal { transform: translateY(0); }
+
+    .modal-handle {
+      width: 36px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 4px;
+      margin: 0 auto 18px;
+    }
+
+    .modal h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+      color: var(--text);
+    }
+
+    .form-group { margin-bottom: 14px; }
+
+    .form-group label {
+      display: block;
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--text-s);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      font-size: .95rem;
+      color: var(--text);
+      background: var(--bg);
+      outline: none;
+      font-family: inherit;
+      transition: border-color .2s;
+    }
+
+    .form-group textarea {
+      min-height: 90px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { border-color: var(--primary); }
+
+    .form-hint {
+      font-size: .72rem;
+      color: var(--text-s);
+      margin-top: 4px;
+    }
+
+    .event-checkboxes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .event-check label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--text-s);
+      transition: all .15s;
+    }
+
+    .event-check input { display: none; }
+
+    .event-check input:checked + label {
+      background: var(--accent);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+
+    .btn-secondary {
+      flex: 1;
+      padding: 13px;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      background: none;
+      font-size: .95rem;
+      font-weight: 600;
+      color: var(--text-s);
+      cursor: pointer;
+    }
+
+    .modal-actions .btn-primary { flex: 2; }
+
+    /* Guests panel (full list for management) */
+    #guests-tab .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    #guests-tab .section-title {
+      font-size: .78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text-s);
+    }
+
+    .divider-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 14px 0 8px;
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--text-s);
+    }
+
+    .divider-label::before,
+    .divider-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Login ─────────────────────────────────────────────────────── -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-emoji">💍</div>
+    <h1>Roshan &amp; Anuja</h1>
+    <p>Enter the password to continue</p>
+    <div class="input-wrap">
+      <input type="password" id="pw-input" placeholder="Password" autocomplete="current-password" />
+      <button class="toggle-pw" id="toggle-pw" type="button" aria-label="Show password">👁</button>
+    </div>
+    <div class="login-error" id="login-error"></div>
+    <button class="btn-primary" id="login-btn">Unlock</button>
+  </div>
+</div>
+
+<!-- ── App ───────────────────────────────────────────────────────── -->
+<div id="app">
+
+  <!-- Header -->
+  <header class="app-header">
+    <h1>💍 Roshan &amp; Anuja</h1>
+    <p>Wedding Planner</p>
+    <div class="header-actions">
+      <button class="btn-icon" id="logout-btn" title="Logout">🔓</button>
+    </div>
+  </header>
+
+  <!-- Tab bar -->
+  <nav class="tab-bar" role="tablist">
+    <button class="tab-btn active" data-tab="wedding"    role="tab">Wedding</button>
+    <button class="tab-btn"        data-tab="reception"  role="tab">Reception</button>
+    <button class="tab-btn"        data-tab="engagement" role="tab">Engagement</button>
+    <button class="tab-btn"        data-tab="guests"     role="tab">All Guests</button>
+  </nav>
+
+  <!-- Wedding Tab -->
+  <section class="tab-content active" id="tab-wedding">
+    <div class="stats-bar">
+      <div class="stat-pill"><div class="num" id="w-total">0</div><div class="lbl">Total</div></div>
+      <div class="stat-pill"><div class="num" id="w-roshan">0</div><div class="lbl">Roshan's</div></div>
+      <div class="stat-pill"><div class="num" id="w-anuja">0</div><div class="lbl">Anuja's</div></div>
+    </div>
+    <div class="filter-row">
+      <button class="chip active" data-event="wedding" data-filter="all">All</button>
+      <button class="chip" data-event="wedding" data-filter="roshan">Roshan's Side</button>
+      <button class="chip" data-event="wedding" data-filter="anuja">Anuja's Side</button>
+      <button class="chip" data-event="wedding" data-filter="invited">Invited ✓</button>
+      <button class="chip" data-event="wedding" data-filter="notinvited">Not Invited</button>
+    </div>
+    <div class="guest-list" id="list-wedding"></div>
+  </section>
+
+  <!-- Reception Tab -->
+  <section class="tab-content" id="tab-reception">
+    <div class="stats-bar">
+      <div class="stat-pill"><div class="num" id="r-total">0</div><div class="lbl">Total</div></div>
+      <div class="stat-pill"><div class="num" id="r-roshan">0</div><div class="lbl">Roshan's</div></div>
+      <div class="stat-pill"><div class="num" id="r-anuja">0</div><div class="lbl">Anuja's</div></div>
+    </div>
+    <div class="filter-row">
+      <button class="chip active" data-event="reception" data-filter="all">All</button>
+      <button class="chip" data-event="reception" data-filter="roshan">Roshan's Side</button>
+      <button class="chip" data-event="reception" data-filter="anuja">Anuja's Side</button>
+      <button class="chip" data-event="reception" data-filter="invited">Invited ✓</button>
+      <button class="chip" data-event="reception" data-filter="notinvited">Not Invited</button>
+    </div>
+    <div class="guest-list" id="list-reception"></div>
+  </section>
+
+  <!-- Engagement Tab -->
+  <section class="tab-content" id="tab-engagement">
+    <div class="stats-bar">
+      <div class="stat-pill"><div class="num" id="e-total">0</div><div class="lbl">Total</div></div>
+      <div class="stat-pill"><div class="num" id="e-roshan">0</div><div class="lbl">Roshan's</div></div>
+      <div class="stat-pill"><div class="num" id="e-anuja">0</div><div class="lbl">Anuja's</div></div>
+    </div>
+    <div class="filter-row">
+      <button class="chip active" data-event="engagement" data-filter="all">All</button>
+      <button class="chip" data-event="engagement" data-filter="roshan">Roshan's Side</button>
+      <button class="chip" data-event="engagement" data-filter="anuja">Anuja's Side</button>
+      <button class="chip" data-event="engagement" data-filter="invited">Invited ✓</button>
+      <button class="chip" data-event="engagement" data-filter="notinvited">Not Invited</button>
+    </div>
+    <div class="guest-list" id="list-engagement"></div>
+  </section>
+
+  <!-- All Guests Tab -->
+  <section class="tab-content" id="tab-guests">
+    <div id="guests-tab">
+      <div class="section-header">
+        <span class="section-title">All Guests (<span id="all-count">0</span>)</span>
+      </div>
+      <div class="filter-row">
+        <button class="chip active" data-gfilter="all">All</button>
+        <button class="chip" data-gfilter="roshan">Roshan's</button>
+        <button class="chip" data-gfilter="anuja">Anuja's</button>
+      </div>
+      <div class="guest-list" id="list-all"></div>
+    </div>
+  </section>
+
+</div><!-- #app -->
+
+<!-- FAB -->
+<div class="fab-wrap" id="fab-wrap">
+  <div class="fab-menu" id="fab-menu">
+    <div class="fab-item" id="fab-bulk">
+      <span class="fab-label">Bulk Add</span>
+      <button class="fab-icon-btn bulk-btn">📋</button>
+    </div>
+    <div class="fab-item" id="fab-anuja">
+      <span class="fab-label">Add — Anuja's Side</span>
+      <button class="fab-icon-btn anuja-btn">👰</button>
+    </div>
+    <div class="fab-item" id="fab-roshan">
+      <span class="fab-label">Add — Roshan's Side</span>
+      <button class="fab-icon-btn roshan-btn">🤵</button>
+    </div>
+  </div>
+  <button class="fab-main" id="fab-main" aria-label="Add guest">+</button>
+</div>
+
+<!-- Add Guest Modal -->
+<div class="modal-overlay" id="modal-add">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="modal-add-title">Add Guest</h2>
+    <div class="form-group">
+      <label>Full Name</label>
+      <input type="text" id="add-name" placeholder="e.g. Priya Sharma" autocomplete="off" />
+    </div>
+    <div class="form-group">
+      <label>Side</label>
+      <select id="add-side">
+        <option value="roshan">Roshan's Side</option>
+        <option value="anuja">Anuja's Side</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Invite to Events</label>
+      <div class="event-checkboxes">
+        <div class="event-check">
+          <input type="checkbox" id="add-ev-wedding" value="wedding" checked />
+          <label for="add-ev-wedding">💒 Wedding</label>
+        </div>
+        <div class="event-check">
+          <input type="checkbox" id="add-ev-reception" value="reception" checked />
+          <label for="add-ev-reception">🎉 Reception</label>
+        </div>
+        <div class="event-check">
+          <input type="checkbox" id="add-ev-engagement" value="engagement" />
+          <label for="add-ev-engagement">💍 Engagement</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="modal-add-cancel">Cancel</button>
+      <button class="btn-primary"   id="modal-add-save">Add Guest</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk Add Modal -->
+<div class="modal-overlay" id="modal-bulk">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>Bulk Add Guests</h2>
+    <div class="form-group">
+      <label>Side</label>
+      <select id="bulk-side">
+        <option value="roshan">Roshan's Side</option>
+        <option value="anuja">Anuja's Side</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Names (one per line)</label>
+      <textarea id="bulk-names" placeholder="Priya Sharma&#10;Raj Patel&#10;Meena Verma"></textarea>
+      <div class="form-hint">Enter one name per line</div>
+    </div>
+    <div class="form-group">
+      <label>Invite to Events</label>
+      <div class="event-checkboxes">
+        <div class="event-check">
+          <input type="checkbox" id="bulk-ev-wedding" value="wedding" checked />
+          <label for="bulk-ev-wedding">💒 Wedding</label>
+        </div>
+        <div class="event-check">
+          <input type="checkbox" id="bulk-ev-reception" value="reception" checked />
+          <label for="bulk-ev-reception">🎉 Reception</label>
+        </div>
+        <div class="event-check">
+          <input type="checkbox" id="bulk-ev-engagement" value="engagement" />
+          <label for="bulk-ev-engagement">💍 Engagement</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="modal-bulk-cancel">Cancel</button>
+      <button class="btn-primary"   id="modal-bulk-save">Add All</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   Wedding Planner — Roshan & Anuja
+   Data stored in localStorage under key "weddingApp"
+═══════════════════════════════════════════════════════════════════ */
+
+const PASSWORD = 'thisismypassword';
+const STORE_KEY = 'weddingApp';
+const SESSION_KEY = 'weddingSession';
+
+/* ── Helpers ─────────────────────────────────────────────────────── */
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
+function initials(name) {
+  return name.split(' ').slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || '?';
+}
+
+/* ── State ───────────────────────────────────────────────────────── */
+function loadGuests() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }
+  catch { return []; }
+}
+
+function saveGuests(guests) {
+  localStorage.setItem(STORE_KEY, JSON.stringify(guests));
+}
+
+let guests = loadGuests();
+
+/* ── Authentication ──────────────────────────────────────────────── */
+const loginScreen = document.getElementById('login-screen');
+const appEl       = document.getElementById('app');
+
+function isAuthenticated() {
+  return sessionStorage.getItem(SESSION_KEY) === '1';
+}
+
+function authenticate() {
+  sessionStorage.setItem(SESSION_KEY, '1');
+  loginScreen.style.display = 'none';
+  appEl.style.display = 'flex';
+  renderAll();
+}
+
+function logout() {
+  sessionStorage.removeItem(SESSION_KEY);
+  appEl.style.display = 'none';
+  loginScreen.style.display = 'flex';
+  document.getElementById('pw-input').value = '';
+  document.getElementById('login-error').textContent = '';
+}
+
+if (isAuthenticated()) {
+  authenticate();
+}
+
+document.getElementById('login-btn').addEventListener('click', tryLogin);
+document.getElementById('pw-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') tryLogin();
+});
+
+function tryLogin() {
+  const val = document.getElementById('pw-input').value.trim().toLowerCase().replace(/\s+/g, '');
+  if (val === PASSWORD) {
+    authenticate();
+  } else {
+    document.getElementById('login-error').textContent = 'Incorrect password. Try again.';
+    document.getElementById('pw-input').select();
+  }
+}
+
+document.getElementById('toggle-pw').addEventListener('click', () => {
+  const inp = document.getElementById('pw-input');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+});
+
+document.getElementById('logout-btn').addEventListener('click', logout);
+
+/* ── Tabs ────────────────────────────────────────────────────────── */
+let activeTab = 'wedding';
+const activeFilters = { wedding: 'all', reception: 'all', engagement: 'all', guests: 'all' };
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active'));
+    btn.classList.add('active');
+    activeTab = btn.dataset.tab;
+    document.getElementById('tab-' + activeTab).classList.add('active');
+    renderAll();
+  });
+});
+
+/* ── Filter chips ────────────────────────────────────────────────── */
+document.querySelectorAll('.chip[data-filter]').forEach(chip => {
+  chip.addEventListener('click', () => {
+    const event = chip.dataset.event;
+    document.querySelectorAll(`.chip[data-event="${event}"]`).forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    activeFilters[event] = chip.dataset.filter;
+    renderEventTab(event);
+  });
+});
+
+document.querySelectorAll('.chip[data-gfilter]').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.chip[data-gfilter]').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    activeFilters.guests = chip.dataset.gfilter;
+    renderAllGuests();
+  });
+});
+
+/* ── Rendering ───────────────────────────────────────────────────── */
+function renderAll() {
+  renderEventTab('wedding');
+  renderEventTab('reception');
+  renderEventTab('engagement');
+  renderAllGuests();
+}
+
+function renderEventTab(event) {
+  const filter = activeFilters[event] || 'all';
+  let list = guests;
+
+  if (filter === 'roshan')     list = guests.filter(g => g.side === 'roshan');
+  else if (filter === 'anuja') list = guests.filter(g => g.side === 'anuja');
+  else if (filter === 'invited')    list = guests.filter(g => g.events.includes(event));
+  else if (filter === 'notinvited') list = guests.filter(g => !g.events.includes(event));
+
+  const container = document.getElementById('list-' + event);
+
+  // Stats
+  const total  = guests.filter(g => g.events.includes(event)).length;
+  const rCount = guests.filter(g => g.side === 'roshan' && g.events.includes(event)).length;
+  const aCount = guests.filter(g => g.side === 'anuja'  && g.events.includes(event)).length;
+
+  const prefix = event[0]; // w/r/e
+  const idMap = { wedding: 'w', reception: 'r', engagement: 'e' };
+  const p = idMap[event];
+  document.getElementById(p + '-total').textContent  = total;
+  document.getElementById(p + '-roshan').textContent = rCount;
+  document.getElementById(p + '-anuja').textContent  = aCount;
+
+  if (list.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="es-icon">🎊</div><p>No guests here yet.<br>Tap + to add guests.</p></div>`;
+    return;
+  }
+
+  container.innerHTML = list.map(g => {
+    const invited = g.events.includes(event);
+    return `
+      <div class="guest-card ${invited ? '' : 'excluded'}" data-id="${g.id}">
+        <div class="avatar ${g.side}">${initials(g.name)}</div>
+        <div class="guest-info">
+          <div class="guest-name">${escHtml(g.name)}</div>
+          <div class="guest-meta">${g.side === 'roshan' ? "Roshan's side" : "Anuja's side"}</div>
+        </div>
+        <label class="toggle-switch" title="${invited ? 'Remove from event' : 'Add to event'}">
+          <input type="checkbox" ${invited ? 'checked' : ''} data-gid="${g.id}" data-ev="${event}" />
+          <span class="toggle-slider"></span>
+        </label>
+        <button class="btn-del" data-del="${g.id}" title="Delete guest">🗑</button>
+      </div>`;
+  }).join('');
+
+  // Bind toggles
+  container.querySelectorAll('input[data-gid]').forEach(inp => {
+    inp.addEventListener('change', () => {
+      const g = guests.find(x => x.id === inp.dataset.gid);
+      if (!g) return;
+      const ev = inp.dataset.ev;
+      if (inp.checked) {
+        if (!g.events.includes(ev)) g.events.push(ev);
+      } else {
+        g.events = g.events.filter(e => e !== ev);
+      }
+      saveGuests(guests);
+      renderAll();
+    });
+  });
+
+  // Bind deletes
+  container.querySelectorAll('[data-del]').forEach(btn => {
+    btn.addEventListener('click', () => deleteGuest(btn.dataset.del));
+  });
+}
+
+function renderAllGuests() {
+  const filter = activeFilters.guests;
+  let list = guests;
+  if (filter === 'roshan') list = guests.filter(g => g.side === 'roshan');
+  else if (filter === 'anuja') list = guests.filter(g => g.side === 'anuja');
+
+  document.getElementById('all-count').textContent = guests.length;
+
+  const container = document.getElementById('list-all');
+
+  if (list.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="es-icon">👥</div><p>No guests added yet.</p></div>`;
+    return;
+  }
+
+  const eventLabels = { wedding: '💒', reception: '🎉', engagement: '💍' };
+
+  container.innerHTML = list.map(g => `
+    <div class="guest-card" data-id="${g.id}">
+      <div class="avatar ${g.side}">${initials(g.name)}</div>
+      <div class="guest-info">
+        <div class="guest-name">${escHtml(g.name)}</div>
+        <div class="guest-meta">
+          ${g.side === 'roshan' ? "Roshan's side" : "Anuja's side"} &middot;
+          ${['wedding','reception','engagement'].filter(e => g.events.includes(e)).map(e => eventLabels[e]).join(' ') || 'No events'}
+        </div>
+      </div>
+      <button class="btn-del" data-del="${g.id}" title="Delete guest">🗑</button>
+    </div>
+  `).join('');
+
+  container.querySelectorAll('[data-del]').forEach(btn => {
+    btn.addEventListener('click', () => deleteGuest(btn.dataset.del));
+  });
+}
+
+function deleteGuest(id) {
+  if (!confirm('Remove this guest?')) return;
+  guests = guests.filter(g => g.id !== id);
+  saveGuests(guests);
+  renderAll();
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── FAB ─────────────────────────────────────────────────────────── */
+const fabMain  = document.getElementById('fab-main');
+const fabMenu  = document.getElementById('fab-menu');
+let fabOpen = false;
+
+fabMain.addEventListener('click', () => {
+  fabOpen = !fabOpen;
+  fabMenu.classList.toggle('open', fabOpen);
+  fabMain.classList.toggle('open', fabOpen);
+});
+
+document.addEventListener('click', e => {
+  if (!document.getElementById('fab-wrap').contains(e.target)) {
+    fabOpen = false;
+    fabMenu.classList.remove('open');
+    fabMain.classList.remove('open');
+  }
+});
+
+document.getElementById('fab-roshan').addEventListener('click', () => openAddModal('roshan'));
+document.getElementById('fab-anuja').addEventListener('click', () => openAddModal('anuja'));
+document.getElementById('fab-bulk').addEventListener('click', openBulkModal);
+
+/* ── Add Modal ───────────────────────────────────────────────────── */
+function openAddModal(side) {
+  closeFab();
+  document.getElementById('add-name').value = '';
+  document.getElementById('add-side').value = side || 'roshan';
+  document.getElementById('add-ev-wedding').checked    = true;
+  document.getElementById('add-ev-reception').checked  = true;
+  document.getElementById('add-ev-engagement').checked = false;
+  document.getElementById('modal-add-title').textContent =
+    side === 'anuja' ? "Add Guest — Anuja's Side" : "Add Guest — Roshan's Side";
+  openModal('modal-add');
+  setTimeout(() => document.getElementById('add-name').focus(), 300);
+}
+
+document.getElementById('modal-add-cancel').addEventListener('click', () => closeModal('modal-add'));
+document.getElementById('modal-add').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-add')) closeModal('modal-add');
+});
+
+document.getElementById('modal-add-save').addEventListener('click', () => {
+  const name = document.getElementById('add-name').value.trim();
+  if (!name) { document.getElementById('add-name').focus(); return; }
+  const side = document.getElementById('add-side').value;
+  const events = ['wedding','reception','engagement'].filter(ev =>
+    document.getElementById('add-ev-' + ev).checked
+  );
+  guests.push({ id: uid(), name, side, events });
+  saveGuests(guests);
+  closeModal('modal-add');
+  renderAll();
+});
+
+/* ── Bulk Modal ──────────────────────────────────────────────────── */
+function openBulkModal() {
+  closeFab();
+  document.getElementById('bulk-names').value = '';
+  document.getElementById('bulk-side').value = 'roshan';
+  document.getElementById('bulk-ev-wedding').checked    = true;
+  document.getElementById('bulk-ev-reception').checked  = true;
+  document.getElementById('bulk-ev-engagement').checked = false;
+  openModal('modal-bulk');
+  setTimeout(() => document.getElementById('bulk-names').focus(), 300);
+}
+
+document.getElementById('modal-bulk-cancel').addEventListener('click', () => closeModal('modal-bulk'));
+document.getElementById('modal-bulk').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-bulk')) closeModal('modal-bulk');
+});
+
+document.getElementById('modal-bulk-save').addEventListener('click', () => {
+  const raw = document.getElementById('bulk-names').value;
+  const names = raw.split('\n').map(s => s.trim()).filter(Boolean);
+  if (!names.length) { document.getElementById('bulk-names').focus(); return; }
+  const side = document.getElementById('bulk-side').value;
+  const events = ['wedding','reception','engagement'].filter(ev =>
+    document.getElementById('bulk-ev-' + ev).checked
+  );
+  names.forEach(name => guests.push({ id: uid(), name, side, events }));
+  saveGuests(guests);
+  closeModal('modal-bulk');
+  renderAll();
+});
+
+/* ── Modal helpers ───────────────────────────────────────────────── */
+function openModal(id) {
+  const el = document.getElementById(id);
+  el.classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function closeFab() {
+  fabOpen = false;
+  fabMenu.classList.remove('open');
+  fabMain.classList.remove('open');
+}
+</script>
+</body>
+</html>
