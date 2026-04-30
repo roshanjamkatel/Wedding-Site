@@ -211,6 +211,13 @@
       transform: translateY(-50%);
     }
 
+    .header-left {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
     .btn-icon {
       background: none;
       border: none;
@@ -778,6 +785,11 @@
       opacity: 1;
       transform: translateX(-50%) translateY(0);
     }
+    /* Activity modal scroll */
+    #modal-activity .modal {
+      max-height: 80vh;
+      overflow-y: auto;
+    }
   </style>
 </head>
 <body>
@@ -813,6 +825,9 @@
 
   <!-- Header -->
   <header class="app-header">
+    <div class="header-left">
+      <button class="btn-icon" id="activity-btn" title="Activity Log">📋</button>
+    </div>
     <h1>💍 Roshan &amp; Anuja</h1>
     <p>Wedding Planner</p>
     <div class="header-actions">
@@ -826,7 +841,6 @@
     <button class="tab-btn"        data-tab="reception"  role="tab">Reception</button>
     <button class="tab-btn"        data-tab="engagement" role="tab">Engagement</button>
     <button class="tab-btn"        data-tab="guests"     role="tab">All Guests</button>
-    <button class="tab-btn"        data-tab="activity"   role="tab">Activity</button>
   </nav>
 
   <!-- Wedding Tab -->
@@ -885,6 +899,7 @@
     <div id="guests-tab">
       <div class="section-header">
         <span class="section-title">All Guests (<span id="all-count">0</span>)</span>
+        <button class="btn-icon" id="export-btn" title="Export CSV">📥</button>
       </div>
       <div class="filter-row">
         <button class="chip active" data-gfilter="all">All</button>
@@ -896,19 +911,7 @@
   </section>
 
   <!-- Activity Tab -->
-  <section class="tab-content" id="tab-activity">
-    <div class="section-header" style="margin-bottom:12px">
-      <span class="section-title">Recent Activity</span>
-    </div>
-    <div id="list-activity"></div>
-
-    <div id="errors-section">
-      <div class="section-header" style="margin-bottom:12px">
-        <span class="section-title">⚠️ Save Errors</span>
-      </div>
-      <div id="list-errors"></div>
-    </div>
-  </section>
+  <section class="tab-content" id="tab-activity" style="display:none"></section>
 
 </div><!-- #app -->
 
@@ -1008,6 +1011,21 @@
     <div class="modal-actions">
       <button class="btn-secondary" id="modal-bulk-cancel">Cancel</button>
       <button class="btn-primary"   id="modal-bulk-save">Add All</button>
+    </div>
+  </div>
+</div>
+
+<!-- Activity Modal -->
+<div class="modal-overlay" id="modal-activity">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>Activity Log</h2>
+    <div id="list-activity"></div>
+    <div id="errors-section" style="margin-top:24px">
+      <div class="section-header" style="margin-bottom:12px">
+        <span class="section-title">⚠️ Save Errors</span>
+      </div>
+      <div id="list-errors"></div>
     </div>
   </div>
 </div>
@@ -1265,6 +1283,10 @@ auth.onAuthStateChanged(user => {
 
 document.getElementById('login-btn').addEventListener('click', signInWithGoogle);
 document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
+document.getElementById('activity-btn').addEventListener('click', () => openModal('modal-activity'));
+document.getElementById('modal-activity').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-activity')) closeModal('modal-activity');
+});
 
 /* ── Tabs ────────────────────────────────────────────────────────── */
 let activeTab = 'wedding';
@@ -1419,6 +1441,34 @@ function deleteGuest(id) {
   saveGuests();
   renderAll();
 }
+
+function exportGuestsCSV() {
+  const filter = activeFilters.guests;
+  let list = guests;
+  if (filter === 'roshan') list = guests.filter(g => g.side === 'roshan');
+  else if (filter === 'anuja') list = guests.filter(g => g.side === 'anuja');
+
+  const rows = [['Name', 'Side', 'Wedding', 'Reception', 'Engagement']];
+  list.forEach(g => {
+    rows.push([
+      g.name,
+      g.side === 'roshan' ? "Roshan's" : "Anuja's",
+      g.events.includes('wedding')    ? 'Yes' : 'No',
+      g.events.includes('reception')  ? 'Yes' : 'No',
+      g.events.includes('engagement') ? 'Yes' : 'No'
+    ]);
+  });
+  const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'guests.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('export-btn').addEventListener('click', exportGuestsCSV);
 
 function renderActivity() {
   const container = document.getElementById('list-activity');
