@@ -62,6 +62,11 @@ values are never stored in the repository.
 
 ### 7 — Deploy Firestore Security Rules
 
+The security rules in `firestore.rules` must be deployed to your Firebase project. They
+restrict access so that only authenticated users can read or write data.
+
+#### Option A — Deploy from your local machine (quickest)
+
 Install the Firebase CLI (one time):
 
 ```bash
@@ -76,8 +81,43 @@ firebase use --add          # select your project
 firebase deploy --only firestore:rules
 ```
 
-This deploys `firestore.rules` so that **only `roshan.jamkatel@gmail.com`** can read or
-write any data, even if someone finds your Firebase config.
+#### Option B — Auto-deploy via GitHub Actions CI (recommended for ongoing maintenance)
+
+You need to store a credential as a GitHub **Secret** so the deploy workflow can
+authenticate with Firebase.
+
+> ⚠️ **Secrets vs Variables:** Go to **Settings → Secrets and variables → Actions →
+> the "Secrets" tab**. Do **not** use the "Variables" tab — variables are not
+> encrypted and are not read by `${{ secrets.… }}` expressions in workflows.
+
+##### Sub-option B1 — Service Account key (recommended)
+
+1. In [Google Cloud Console](https://console.cloud.google.com) → **IAM & Admin →
+   Service Accounts** → create a new service account with the **Firebase Admin SDK
+   Administrator Service Agent** role (or **Firebase Rules Admin**).
+2. Generate a JSON key for that service account.
+3. Copy the entire JSON key content.
+4. In GitHub → **Settings → Secrets and variables → Actions → Secrets** →
+   **New repository secret**:
+   - Name: `FIREBASE_SERVICE_ACCOUNT`
+   - Value: paste the full JSON key
+
+##### Sub-option B2 — CI login token (legacy, still works with firebase-tools v13)
+
+```bash
+npm install -g firebase-tools
+firebase login:ci
+```
+
+Copy the token printed, then add it as a GitHub Secret:
+- Name: `FIREBASE_TOKEN`
+- Value: paste the token
+
+> **Note:** `firebase login:ci` tokens are deprecated in firebase-tools v14+.
+> Sub-option B1 (service account) is the long-term supported approach.
+
+Once either secret is set, every push to `main` will automatically deploy the
+updated Firestore rules.
 
 ### 8 — Deploy to GitHub Pages
 
