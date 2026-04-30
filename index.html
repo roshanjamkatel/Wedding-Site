@@ -1124,17 +1124,21 @@ function showSaveToast(message) {
 
 async function saveError(operation, error) {
   if (!currentUser) return;
+  const errorEntry = {
+    operation: operation,
+    message:   error.message || String(error),
+    code:      error.code    || 'unknown',
+    user:      getCurrentUserIdentifier(),
+    userId:    currentUser ? currentUser.uid : null,
+    timestamp: Date.now()
+  };
   try {
-    await db.collection('errors').add({
-      operation: operation,
-      message:   error.message || String(error),
-      code:      error.code    || 'unknown',
-      user:      getCurrentUserIdentifier(),
-      userId:    currentUser ? currentUser.uid : null,
-      timestamp: Date.now()
-    });
+    await db.collection('errors').add(errorEntry);
   } catch (e) {
     console.error('Could not save error to database', e);
+    recentErrors.unshift(errorEntry);
+    if (recentErrors.length > 50) recentErrors.pop();
+    renderErrors();
   }
 }
 
@@ -1304,6 +1308,7 @@ function renderAll() {
   renderEventTab('engagement');
   renderAllGuests();
   renderActivity();
+  renderErrors();
 }
 
 function renderEventTab(event) {
