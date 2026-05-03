@@ -299,6 +299,55 @@
       letter-spacing: .05em;
     }
 
+    .stat-pill.stat-hidden { display: none; }
+
+    /* ── Stats Preferences Panel ─────────────────────────────────── */
+    .stats-prefs-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 50;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .stats-prefs-panel {
+      background: var(--surface);
+      border-radius: 20px 20px 0 0;
+      padding: 20px 20px 36px;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .stats-prefs-panel h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: var(--text);
+    }
+
+    .stats-prefs-panel .panel-sub {
+      font-size: .78rem;
+      color: var(--text-s);
+      margin-bottom: 16px;
+    }
+
+    .pref-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: .9rem;
+      color: var(--text);
+    }
+
+    .pref-item:last-child { border-bottom: none; }
+
+    .pref-item-label { display: flex; flex-direction: column; gap: 2px; }
+    .pref-item-label .pref-desc { font-size: .72rem; color: var(--text-s); }
+
     /* Filter chips */
     .filter-row {
       display: flex;
@@ -850,6 +899,7 @@
     <h1>💍 Roshan &amp; Anuja</h1>
     <p>Wedding Planner</p>
     <div class="header-actions">
+      <button class="btn-icon" id="stats-prefs-btn" title="Customize Stats">📊</button>
       <button class="btn-icon" id="logout-btn" title="Logout">🔓</button>
     </div>
   </header>
@@ -865,9 +915,10 @@
   <!-- Wedding Tab -->
   <section class="tab-content active" id="tab-wedding">
     <div class="stats-bar">
-      <div class="stat-pill"><div class="num" id="w-roshan">0</div><div class="lbl">Roshans</div></div>
-      <div class="stat-pill"><div class="num" id="w-anuja">0</div><div class="lbl">Anujas</div></div>
-      <div class="stat-pill"><div class="num" id="w-kids">0</div><div class="lbl">Total Kids</div></div>
+      <div class="stat-pill" data-stat="total"><div class="num" id="w-total">0</div><div class="lbl">Total</div></div>
+      <div class="stat-pill" data-stat="kids"><div class="num" id="w-kids">0</div><div class="lbl">Kids</div></div>
+      <div class="stat-pill" data-stat="roshan"><div class="num" id="w-roshan">0</div><div class="lbl">Roshan</div></div>
+      <div class="stat-pill" data-stat="anuja"><div class="num" id="w-anuja">0</div><div class="lbl">Anuja</div></div>
     </div>
     <div class="filter-row">
       <button class="chip active" data-event="wedding" data-filter="all">All</button>
@@ -882,9 +933,10 @@
   <!-- Reception Tab -->
   <section class="tab-content" id="tab-reception">
     <div class="stats-bar">
-      <div class="stat-pill"><div class="num" id="r-roshan">0</div><div class="lbl">Roshans</div></div>
-      <div class="stat-pill"><div class="num" id="r-anuja">0</div><div class="lbl">Anujas</div></div>
-      <div class="stat-pill"><div class="num" id="r-kids">0</div><div class="lbl">Total Kids</div></div>
+      <div class="stat-pill" data-stat="total"><div class="num" id="r-total">0</div><div class="lbl">Total</div></div>
+      <div class="stat-pill" data-stat="kids"><div class="num" id="r-kids">0</div><div class="lbl">Kids</div></div>
+      <div class="stat-pill" data-stat="roshan"><div class="num" id="r-roshan">0</div><div class="lbl">Roshan</div></div>
+      <div class="stat-pill" data-stat="anuja"><div class="num" id="r-anuja">0</div><div class="lbl">Anuja</div></div>
     </div>
     <div class="filter-row">
       <button class="chip active" data-event="reception" data-filter="all">All</button>
@@ -899,9 +951,10 @@
   <!-- Engagement Tab -->
   <section class="tab-content" id="tab-engagement">
     <div class="stats-bar">
-      <div class="stat-pill"><div class="num" id="e-roshan">0</div><div class="lbl">Roshans</div></div>
-      <div class="stat-pill"><div class="num" id="e-anuja">0</div><div class="lbl">Anujas</div></div>
-      <div class="stat-pill"><div class="num" id="e-kids">0</div><div class="lbl">Total Kids</div></div>
+      <div class="stat-pill" data-stat="total"><div class="num" id="e-total">0</div><div class="lbl">Total</div></div>
+      <div class="stat-pill" data-stat="kids"><div class="num" id="e-kids">0</div><div class="lbl">Kids</div></div>
+      <div class="stat-pill" data-stat="roshan"><div class="num" id="e-roshan">0</div><div class="lbl">Roshan</div></div>
+      <div class="stat-pill" data-stat="anuja"><div class="num" id="e-anuja">0</div><div class="lbl">Anuja</div></div>
     </div>
     <div class="filter-row">
       <button class="chip active" data-event="engagement" data-filter="all">All</button>
@@ -924,9 +977,10 @@
         </div>
       </div>
       <div class="stats-bar">
-        <div class="stat-pill"><div class="num" id="g-roshan">0</div><div class="lbl">Roshans</div></div>
-        <div class="stat-pill"><div class="num" id="g-anuja">0</div><div class="lbl">Anujas</div></div>
-        <div class="stat-pill"><div class="num" id="g-kids">0</div><div class="lbl">Total Kids</div></div>
+        <div class="stat-pill" data-stat="total"><div class="num" id="g-total">0</div><div class="lbl">Total</div></div>
+        <div class="stat-pill" data-stat="kids"><div class="num" id="g-kids">0</div><div class="lbl">Kids</div></div>
+        <div class="stat-pill" data-stat="roshan"><div class="num" id="g-roshan">0</div><div class="lbl">Roshan</div></div>
+        <div class="stat-pill" data-stat="anuja"><div class="num" id="g-anuja">0</div><div class="lbl">Anuja</div></div>
       </div>
       <div class="filter-row">
         <button class="chip active" data-gfilter="all">All</button>
@@ -1108,7 +1162,55 @@
   </div>
 </div>
 
-<!-- Activity Modal -->
+<!-- Stats Preferences Panel -->
+<div id="modal-stats-prefs" style="display:none;" class="stats-prefs-overlay">
+  <div class="stats-prefs-panel">
+    <h3>📊 Customize Statistics</h3>
+    <p class="panel-sub">Choose which totals to display on each tab.</p>
+    <div class="pref-item">
+      <div class="pref-item-label">
+        <span>Total People</span>
+        <span class="pref-desc">All guests (adults + kids)</span>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="pref-total" checked />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div class="pref-item">
+      <div class="pref-item-label">
+        <span>Kids</span>
+        <span class="pref-desc">Guests marked as kids</span>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="pref-kids" checked />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div class="pref-item">
+      <div class="pref-item-label">
+        <span>Roshan's Invitees</span>
+        <span class="pref-desc">Roshan's side, adults only</span>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="pref-roshan" checked />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+    <div class="pref-item">
+      <div class="pref-item-label">
+        <span>Anuja's Invitees</span>
+        <span class="pref-desc">Anuja's side, adults only</span>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="pref-anuja" checked />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+  </div>
+</div>
+
+
 <div class="modal-overlay" id="modal-activity">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -1196,6 +1298,8 @@ let currentUser = null;
 let unsubscribeSnapshot = null;
 let unsubscribeErrors = null;
 let recentErrors = [];
+const DEFAULT_STAT_PREFS = { total: true, kids: true, roshan: true, anuja: true };
+let userPrefs = { visibleStats: Object.assign({}, DEFAULT_STAT_PREFS) };
 
 function sharedDocRef() {
   return db.collection('shared').doc('guestList');
@@ -1331,6 +1435,7 @@ async function signInWithGoogle() {
 
 function showApp(user) {
   showLoading();
+  loadUserPrefs();
   subscribeToGuests(() => {
     hideLoading();
     loginScreen.style.display = 'none';
@@ -1350,6 +1455,7 @@ function showLogin() {
     unsubscribeErrors = null;
   }
   recentErrors = [];
+  userPrefs = { visibleStats: Object.assign({}, DEFAULT_STAT_PREFS) };
   appEl.style.display = 'none';
   document.getElementById('fab-wrap').style.display = 'none';
   loginScreen.style.display = 'flex';
@@ -1379,6 +1485,26 @@ document.getElementById('logout-btn').addEventListener('click', () => auth.signO
 document.getElementById('activity-btn').addEventListener('click', () => openModal('modal-activity'));
 document.getElementById('modal-activity').addEventListener('click', e => {
   if (e.target === document.getElementById('modal-activity')) closeModal('modal-activity');
+});
+
+/* ── Stats Preferences ───────────────────────────────────────────── */
+const statsPrefsModal = document.getElementById('modal-stats-prefs');
+
+document.getElementById('stats-prefs-btn').addEventListener('click', () => {
+  applyStatPrefs(); // sync checkboxes with current state
+  statsPrefsModal.style.display = 'flex';
+});
+
+statsPrefsModal.addEventListener('click', e => {
+  if (e.target === statsPrefsModal) statsPrefsModal.style.display = 'none';
+});
+
+['total', 'kids', 'roshan', 'anuja'].forEach(stat => {
+  document.getElementById('pref-' + stat).addEventListener('change', function () {
+    userPrefs.visibleStats[stat] = this.checked;
+    saveUserPrefs();
+    applyStatPrefs();
+  });
 });
 
 /* ── Tabs ────────────────────────────────────────────────────────── */
@@ -1416,6 +1542,39 @@ document.querySelectorAll('.chip[data-gfilter]').forEach(chip => {
   });
 });
 
+/* ── User Stat Preferences ───────────────────────────────────────── */
+function loadUserPrefs() {
+  if (!currentUser) return;
+  const key = 'statPrefs_' + currentUser.uid;
+  const stored = localStorage.getItem(key);
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (parsed.visibleStats) {
+        userPrefs.visibleStats = Object.assign({}, DEFAULT_STAT_PREFS, parsed.visibleStats);
+      }
+    } catch (e) { console.warn('Could not parse stored stat preferences:', e); }
+  }
+  applyStatPrefs();
+}
+
+function saveUserPrefs() {
+  if (!currentUser) return;
+  const key = 'statPrefs_' + currentUser.uid;
+  localStorage.setItem(key, JSON.stringify(userPrefs));
+}
+
+function applyStatPrefs() {
+  ['total', 'kids', 'roshan', 'anuja'].forEach(stat => {
+    const show = userPrefs.visibleStats[stat] !== false;
+    document.querySelectorAll(`.stat-pill[data-stat="${stat}"]`).forEach(el => {
+      el.classList.toggle('stat-hidden', !show);
+    });
+    const cb = document.getElementById('pref-' + stat);
+    if (cb) cb.checked = show;
+  });
+}
+
 /* ── Rendering ───────────────────────────────────────────────────── */
 function renderAll() {
   renderEventTab('wedding');
@@ -1438,12 +1597,14 @@ function renderEventTab(event) {
   const container = document.getElementById('list-' + event);
 
   // Stats
-  const roshanCount = guests.filter(g => g.events.includes(event) && g.side === 'roshan').length;
-  const anujaCount  = guests.filter(g => g.events.includes(event) && g.side === 'anuja').length;
-  const kidCount    = guests.filter(g => g.events.includes(event) &&  g.isKid).length;
+  const totalCount  = guests.filter(g => g.events.includes(event)).length;
+  const roshanCount = guests.filter(g => g.events.includes(event) && g.side === 'roshan' && !g.isKid).length;
+  const anujaCount  = guests.filter(g => g.events.includes(event) && g.side === 'anuja'  && !g.isKid).length;
+  const kidCount    = guests.filter(g => g.events.includes(event) && g.isKid).length;
 
   const idMap = { wedding: 'w', reception: 'r', engagement: 'e' };
   const p = idMap[event];
+  document.getElementById(p + '-total').textContent  = totalCount;
   document.getElementById(p + '-roshan').textContent = roshanCount;
   document.getElementById(p + '-anuja').textContent  = anujaCount;
   document.getElementById(p + '-kids').textContent   = kidCount;
@@ -1505,11 +1666,12 @@ function renderAllGuests() {
   else if (filter === 'adults') list = guests.filter(g => !g.isKid);
   else if (filter === 'kids')   list = guests.filter(g => g.isKid);
 
-  const allTotal   = guests.length;
-  const allRoshan  = guests.filter(g => g.side === 'roshan').length;
-  const allAnuja   = guests.filter(g => g.side === 'anuja').length;
-  const allKids    = guests.filter(g =>  g.isKid).length;
+  const allTotal  = guests.length;
+  const allRoshan = guests.filter(g => g.side === 'roshan' && !g.isKid).length;
+  const allAnuja  = guests.filter(g => g.side === 'anuja'  && !g.isKid).length;
+  const allKids   = guests.filter(g => g.isKid).length;
   document.getElementById('all-count').textContent = allTotal;
+  document.getElementById('g-total').textContent   = allTotal;
   document.getElementById('g-roshan').textContent  = allRoshan;
   document.getElementById('g-anuja').textContent   = allAnuja;
   document.getElementById('g-kids').textContent    = allKids;
