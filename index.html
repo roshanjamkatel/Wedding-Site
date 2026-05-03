@@ -103,6 +103,13 @@
       min-height: 16px;
     }
 
+    .form-error {
+      font-size: .8rem;
+      color: var(--danger);
+      margin-top: 6px;
+      min-height: 16px;
+    }
+
     .btn-primary {
       width: 100%;
       padding: 14px;
@@ -364,6 +371,18 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+
+    .guest-name-link {
+      cursor: pointer;
+      color: var(--primary);
+      text-decoration: underline;
+      text-decoration-color: transparent;
+      transition: text-decoration-color .15s;
+    }
+
+    .guest-name-link:hover {
+      text-decoration-color: var(--primary);
     }
 
     .guest-meta {
@@ -899,7 +918,10 @@
     <div id="guests-tab">
       <div class="section-header">
         <span class="section-title">All Guests (<span id="all-count">0</span>)</span>
-        <button class="btn-icon" id="export-btn" title="Export CSV">📥</button>
+        <div style="display:flex;gap:4px">
+          <button class="btn-icon" id="dedup-btn" title="Remove Duplicates" aria-label="Remove duplicate guests">🧹</button>
+          <button class="btn-icon" id="export-btn" title="Export CSV">📥</button>
+        </div>
       </div>
       <div class="filter-row">
         <button class="chip active" data-gfilter="all">All</button>
@@ -942,6 +964,7 @@
     <div class="form-group">
       <label>Full Name</label>
       <input type="text" id="add-name" placeholder="e.g. Priya Sharma" autocomplete="off" />
+      <div class="form-error" id="add-name-error"></div>
     </div>
     <div class="form-group">
       <label>Side</label>
@@ -990,6 +1013,7 @@
       <label>Names (one per line)</label>
       <textarea id="bulk-names" placeholder="Priya Sharma&#10;Raj Patel&#10;Meena Verma"></textarea>
       <div class="form-hint">Enter one name per line</div>
+      <div class="form-error" id="bulk-error"></div>
     </div>
     <div class="form-group">
       <label>Invite to Events</label>
@@ -1011,6 +1035,35 @@
     <div class="modal-actions">
       <button class="btn-secondary" id="modal-bulk-cancel">Cancel</button>
       <button class="btn-primary"   id="modal-bulk-save">Add All</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Guest Modal -->
+<div class="modal-overlay" id="modal-edit">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2 id="modal-edit-title">Edit Events</h2>
+    <div class="form-group">
+      <label>Invite to Events</label>
+      <div class="event-checkboxes">
+        <div class="event-check">
+          <input type="checkbox" id="edit-ev-wedding" value="wedding" />
+          <label for="edit-ev-wedding">💒 Wedding</label>
+        </div>
+        <div class="event-check">
+          <input type="checkbox" id="edit-ev-reception" value="reception" />
+          <label for="edit-ev-reception">🎉 Reception</label>
+        </div>
+        <div class="event-check">
+          <input type="checkbox" id="edit-ev-engagement" value="engagement" />
+          <label for="edit-ev-engagement">💍 Engagement</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="modal-edit-cancel">Cancel</button>
+      <button class="btn-primary"   id="modal-edit-save">Save</button>
     </div>
   </div>
 </div>
@@ -1366,7 +1419,7 @@ function renderEventTab(event) {
       <div class="guest-card ${invited ? '' : 'excluded'}" data-id="${g.id}">
         <div class="avatar ${g.side}">${initials(g.name)}</div>
         <div class="guest-info">
-          <div class="guest-name">${escHtml(g.name)}</div>
+          <div class="guest-name guest-name-link" data-edit="${g.id}" title="Edit events">${escHtml(g.name)}</div>
           <div class="guest-meta">${g.side === 'roshan' ? "Roshan's side" : "Anuja's side"}</div>
         </div>
         <label class="toggle-switch" title="${invited ? 'Remove from event' : 'Add to event'}">
@@ -1376,6 +1429,11 @@ function renderEventTab(event) {
         <button class="btn-del" data-del="${g.id}" title="Delete guest">🗑</button>
       </div>`;
   }).join('');
+
+  // Bind name clicks
+  container.querySelectorAll('[data-edit]').forEach(el => {
+    el.addEventListener('click', () => openEditModal(el.dataset.edit));
+  });
 
   // Bind toggles
   container.querySelectorAll('input[data-gid]').forEach(inp => {
@@ -1420,7 +1478,7 @@ function renderAllGuests() {
     <div class="guest-card" data-id="${g.id}">
       <div class="avatar ${g.side}">${initials(g.name)}</div>
       <div class="guest-info">
-        <div class="guest-name">${escHtml(g.name)}</div>
+        <div class="guest-name guest-name-link" data-edit="${g.id}" title="Edit events">${escHtml(g.name)}</div>
         <div class="guest-meta">
           ${g.side === 'roshan' ? "Roshan's side" : "Anuja's side"} &middot;
           ${['wedding','reception','engagement'].filter(e => g.events.includes(e)).map(e => eventLabels[e]).join(' ') || 'No events'}
@@ -1429,6 +1487,10 @@ function renderAllGuests() {
       <button class="btn-del" data-del="${g.id}" title="Delete guest">🗑</button>
     </div>
   `).join('');
+
+  container.querySelectorAll('[data-edit]').forEach(el => {
+    el.addEventListener('click', () => openEditModal(el.dataset.edit));
+  });
 
   container.querySelectorAll('[data-del]').forEach(btn => {
     btn.addEventListener('click', () => deleteGuest(btn.dataset.del));
@@ -1521,6 +1583,7 @@ document.getElementById('fab-bulk').addEventListener('click', openBulkModal);
 function openAddModal(side) {
   closeFab();
   document.getElementById('add-name').value = '';
+  document.getElementById('add-name-error').textContent = '';
   document.getElementById('add-side').value = side || 'roshan';
   document.getElementById('add-ev-wedding').checked    = true;
   document.getElementById('add-ev-reception').checked  = true;
@@ -1539,6 +1602,12 @@ document.getElementById('modal-add').addEventListener('click', e => {
 document.getElementById('modal-add-save').addEventListener('click', () => {
   const name = document.getElementById('add-name').value.trim();
   if (!name) { document.getElementById('add-name').focus(); return; }
+  const errorEl = document.getElementById('add-name-error');
+  if (guests.some(g => g.name.toLowerCase() === name.toLowerCase())) {
+    errorEl.textContent = `"${escHtml(name)}" is already on the guest list.`;
+    return;
+  }
+  errorEl.textContent = '';
   const side = document.getElementById('add-side').value;
   const events = ['wedding','reception','engagement'].filter(ev =>
     document.getElementById('add-ev-' + ev).checked
@@ -1553,6 +1622,7 @@ document.getElementById('modal-add-save').addEventListener('click', () => {
 function openBulkModal() {
   closeFab();
   document.getElementById('bulk-names').value = '';
+  document.getElementById('bulk-error').textContent = '';
   document.getElementById('bulk-side').value = 'roshan';
   document.getElementById('bulk-ev-wedding').checked    = true;
   document.getElementById('bulk-ev-reception').checked  = true;
@@ -1576,10 +1646,94 @@ document.getElementById('modal-bulk-save').addEventListener('click', () => {
   );
   const addedBy = getCurrentUserIdentifier();
   const addedAt = Date.now();
-  names.forEach(name => guests.push({ id: uid(), name, side, events, addedBy, addedAt }));
+  const existingNames = new Set(guests.map(g => g.name.toLowerCase()));
+  const duplicates = [];
+  const toAdd = [];
+  names.forEach(name => {
+    if (existingNames.has(name.toLowerCase())) {
+      duplicates.push(name);
+    } else {
+      toAdd.push(name);
+    }
+  });
+  const bulkErrorEl = document.getElementById('bulk-error');
+  if (toAdd.length === 0) {
+    bulkErrorEl.textContent = `Already on the list: ${duplicates.map(escHtml).join(', ')}`;
+    return;
+  }
+  bulkErrorEl.textContent = '';
+  toAdd.forEach(name => guests.push({ id: uid(), name, side, events, addedBy, addedAt }));
   saveGuests();
   closeModal('modal-bulk');
   renderAll();
+  if (duplicates.length > 0) {
+    showSaveToast(`Added ${toAdd.length} guest(s). Skipped ${duplicates.length} duplicate(s): ${duplicates.map(escHtml).join(', ')}`);
+  }
+});
+
+/* ── Edit Guest Modal ────────────────────────────────────────────── */
+let editingGuestId = null;
+
+function openEditModal(id) {
+  const g = guests.find(x => x.id === id);
+  if (!g) return;
+  editingGuestId = id;
+  document.getElementById('modal-edit-title').textContent = `Edit Events — ${g.name}`;
+  document.getElementById('edit-ev-wedding').checked    = g.events.includes('wedding');
+  document.getElementById('edit-ev-reception').checked  = g.events.includes('reception');
+  document.getElementById('edit-ev-engagement').checked = g.events.includes('engagement');
+  openModal('modal-edit');
+}
+
+document.getElementById('modal-edit-cancel').addEventListener('click', () => closeModal('modal-edit'));
+document.getElementById('modal-edit').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-edit')) closeModal('modal-edit');
+});
+
+document.getElementById('modal-edit-save').addEventListener('click', () => {
+  if (!editingGuestId) return;
+  const g = guests.find(x => x.id === editingGuestId);
+  if (!g) return;
+  g.events = ['wedding','reception','engagement'].filter(ev =>
+    document.getElementById('edit-ev-' + ev).checked
+  );
+  saveGuests();
+  closeModal('modal-edit');
+  renderAll();
+});
+
+/* ── Deduplication ───────────────────────────────────────────────── */
+function deduplicateGuests() {
+  const seen = new Map();
+  const toRemove = [];
+  guests.forEach(g => {
+    const key = g.name.toLowerCase();
+    if (seen.has(key)) {
+      // Merge events from duplicate into the first occurrence
+      const existing = seen.get(key);
+      g.events.forEach(ev => {
+        if (!existing.events.includes(ev)) existing.events.push(ev);
+      });
+      toRemove.push(g.id);
+    } else {
+      seen.set(key, g);
+    }
+  });
+  if (toRemove.length === 0) return 0;
+  const toRemoveSet = new Set(toRemove);
+  guests = guests.filter(g => !toRemoveSet.has(g.id));
+  saveGuests();
+  renderAll();
+  return toRemove.length;
+}
+
+document.getElementById('dedup-btn').addEventListener('click', () => {
+  const removed = deduplicateGuests();
+  if (removed === 0) {
+    showSaveToast('✅ No duplicates found.');
+  } else {
+    showSaveToast(`✅ Removed ${removed} duplicate${removed > 1 ? 's' : ''}.`);
+  }
 });
 
 /* ── Modal helpers ───────────────────────────────────────────────── */
