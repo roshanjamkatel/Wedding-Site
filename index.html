@@ -865,9 +865,9 @@
   <!-- Wedding Tab -->
   <section class="tab-content active" id="tab-wedding">
     <div class="stats-bar">
-      <div class="stat-pill"><div class="num" id="w-adults">0</div><div class="lbl">Adults</div></div>
-      <div class="stat-pill"><div class="num" id="w-total">0</div><div class="lbl">All</div></div>
-      <div class="stat-pill"><div class="num" id="w-kids">0</div><div class="lbl">Kids</div></div>
+      <div class="stat-pill"><div class="num" id="w-roshan">0</div><div class="lbl">Roshans</div></div>
+      <div class="stat-pill"><div class="num" id="w-anuja">0</div><div class="lbl">Anujas</div></div>
+      <div class="stat-pill"><div class="num" id="w-kids">0</div><div class="lbl">Total Kids</div></div>
     </div>
     <div class="filter-row">
       <button class="chip active" data-event="wedding" data-filter="all">All</button>
@@ -882,9 +882,9 @@
   <!-- Reception Tab -->
   <section class="tab-content" id="tab-reception">
     <div class="stats-bar">
-      <div class="stat-pill"><div class="num" id="r-adults">0</div><div class="lbl">Adults</div></div>
-      <div class="stat-pill"><div class="num" id="r-total">0</div><div class="lbl">All</div></div>
-      <div class="stat-pill"><div class="num" id="r-kids">0</div><div class="lbl">Kids</div></div>
+      <div class="stat-pill"><div class="num" id="r-roshan">0</div><div class="lbl">Roshans</div></div>
+      <div class="stat-pill"><div class="num" id="r-anuja">0</div><div class="lbl">Anujas</div></div>
+      <div class="stat-pill"><div class="num" id="r-kids">0</div><div class="lbl">Total Kids</div></div>
     </div>
     <div class="filter-row">
       <button class="chip active" data-event="reception" data-filter="all">All</button>
@@ -899,9 +899,9 @@
   <!-- Engagement Tab -->
   <section class="tab-content" id="tab-engagement">
     <div class="stats-bar">
-      <div class="stat-pill"><div class="num" id="e-adults">0</div><div class="lbl">Adults</div></div>
-      <div class="stat-pill"><div class="num" id="e-total">0</div><div class="lbl">All</div></div>
-      <div class="stat-pill"><div class="num" id="e-kids">0</div><div class="lbl">Kids</div></div>
+      <div class="stat-pill"><div class="num" id="e-roshan">0</div><div class="lbl">Roshans</div></div>
+      <div class="stat-pill"><div class="num" id="e-anuja">0</div><div class="lbl">Anujas</div></div>
+      <div class="stat-pill"><div class="num" id="e-kids">0</div><div class="lbl">Total Kids</div></div>
     </div>
     <div class="filter-row">
       <button class="chip active" data-event="engagement" data-filter="all">All</button>
@@ -924,9 +924,9 @@
         </div>
       </div>
       <div class="stats-bar">
-        <div class="stat-pill"><div class="num" id="g-adults">0</div><div class="lbl">Adults</div></div>
-        <div class="stat-pill"><div class="num" id="g-total">0</div><div class="lbl">All</div></div>
-        <div class="stat-pill"><div class="num" id="g-kids">0</div><div class="lbl">Kids</div></div>
+        <div class="stat-pill"><div class="num" id="g-roshan">0</div><div class="lbl">Roshans</div></div>
+        <div class="stat-pill"><div class="num" id="g-anuja">0</div><div class="lbl">Anujas</div></div>
+        <div class="stat-pill"><div class="num" id="g-kids">0</div><div class="lbl">Total Kids</div></div>
       </div>
       <div class="filter-row">
         <button class="chip active" data-gfilter="all">All</button>
@@ -1438,14 +1438,14 @@ function renderEventTab(event) {
   const container = document.getElementById('list-' + event);
 
   // Stats
-  const total      = guests.filter(g => g.events.includes(event)).length;
-  const adultCount = guests.filter(g => g.events.includes(event) && !g.isKid).length;
-  const kidCount   = guests.filter(g => g.events.includes(event) &&  g.isKid).length;
+  const roshanCount = guests.filter(g => g.events.includes(event) && g.side === 'roshan').length;
+  const anujaCount  = guests.filter(g => g.events.includes(event) && g.side === 'anuja').length;
+  const kidCount    = guests.filter(g => g.events.includes(event) &&  g.isKid).length;
 
   const idMap = { wedding: 'w', reception: 'r', engagement: 'e' };
   const p = idMap[event];
-  document.getElementById(p + '-adults').textContent = adultCount;
-  document.getElementById(p + '-total').textContent  = total;
+  document.getElementById(p + '-roshan').textContent = roshanCount;
+  document.getElementById(p + '-anuja').textContent  = anujaCount;
   document.getElementById(p + '-kids').textContent   = kidCount;
 
   if (list.length === 0) {
@@ -1505,12 +1505,13 @@ function renderAllGuests() {
   else if (filter === 'adults') list = guests.filter(g => !g.isKid);
   else if (filter === 'kids')   list = guests.filter(g => g.isKid);
 
-  const allTotal  = guests.length;
-  const allAdults = guests.filter(g => !g.isKid).length;
-  const allKids   = guests.filter(g =>  g.isKid).length;
+  const allTotal   = guests.length;
+  const allRoshan  = guests.filter(g => g.side === 'roshan').length;
+  const allAnuja   = guests.filter(g => g.side === 'anuja').length;
+  const allKids    = guests.filter(g =>  g.isKid).length;
   document.getElementById('all-count').textContent = allTotal;
-  document.getElementById('g-adults').textContent  = allAdults;
-  document.getElementById('g-total').textContent   = allTotal;
+  document.getElementById('g-roshan').textContent  = allRoshan;
+  document.getElementById('g-anuja').textContent   = allAnuja;
   document.getElementById('g-kids').textContent    = allKids;
 
   const container = document.getElementById('list-all');
