@@ -865,9 +865,9 @@
   <!-- Wedding Tab -->
   <section class="tab-content active" id="tab-wedding">
     <div class="stats-bar">
-      <div class="stat-pill"><div class="num" id="w-total">0</div><div class="lbl">Total</div></div>
-      <div class="stat-pill"><div class="num" id="w-roshan">0</div><div class="lbl">Roshan's</div></div>
-      <div class="stat-pill"><div class="num" id="w-anuja">0</div><div class="lbl">Anuja's</div></div>
+      <div class="stat-pill"><div class="num" id="w-adults">0</div><div class="lbl">Adults</div></div>
+      <div class="stat-pill"><div class="num" id="w-total">0</div><div class="lbl">All</div></div>
+      <div class="stat-pill"><div class="num" id="w-kids">0</div><div class="lbl">Kids</div></div>
     </div>
     <div class="filter-row">
       <button class="chip active" data-event="wedding" data-filter="all">All</button>
@@ -882,9 +882,9 @@
   <!-- Reception Tab -->
   <section class="tab-content" id="tab-reception">
     <div class="stats-bar">
-      <div class="stat-pill"><div class="num" id="r-total">0</div><div class="lbl">Total</div></div>
-      <div class="stat-pill"><div class="num" id="r-roshan">0</div><div class="lbl">Roshan's</div></div>
-      <div class="stat-pill"><div class="num" id="r-anuja">0</div><div class="lbl">Anuja's</div></div>
+      <div class="stat-pill"><div class="num" id="r-adults">0</div><div class="lbl">Adults</div></div>
+      <div class="stat-pill"><div class="num" id="r-total">0</div><div class="lbl">All</div></div>
+      <div class="stat-pill"><div class="num" id="r-kids">0</div><div class="lbl">Kids</div></div>
     </div>
     <div class="filter-row">
       <button class="chip active" data-event="reception" data-filter="all">All</button>
@@ -899,9 +899,9 @@
   <!-- Engagement Tab -->
   <section class="tab-content" id="tab-engagement">
     <div class="stats-bar">
-      <div class="stat-pill"><div class="num" id="e-total">0</div><div class="lbl">Total</div></div>
-      <div class="stat-pill"><div class="num" id="e-roshan">0</div><div class="lbl">Roshan's</div></div>
-      <div class="stat-pill"><div class="num" id="e-anuja">0</div><div class="lbl">Anuja's</div></div>
+      <div class="stat-pill"><div class="num" id="e-adults">0</div><div class="lbl">Adults</div></div>
+      <div class="stat-pill"><div class="num" id="e-total">0</div><div class="lbl">All</div></div>
+      <div class="stat-pill"><div class="num" id="e-kids">0</div><div class="lbl">Kids</div></div>
     </div>
     <div class="filter-row">
       <button class="chip active" data-event="engagement" data-filter="all">All</button>
@@ -923,8 +923,15 @@
           <button class="btn-icon" id="export-btn" title="Export CSV">📥</button>
         </div>
       </div>
+      <div class="stats-bar">
+        <div class="stat-pill"><div class="num" id="g-adults">0</div><div class="lbl">Adults</div></div>
+        <div class="stat-pill"><div class="num" id="g-total">0</div><div class="lbl">All</div></div>
+        <div class="stat-pill"><div class="num" id="g-kids">0</div><div class="lbl">Kids</div></div>
+      </div>
       <div class="filter-row">
         <button class="chip active" data-gfilter="all">All</button>
+        <button class="chip" data-gfilter="adults">Adults</button>
+        <button class="chip" data-gfilter="kids">Kids</button>
         <button class="chip" data-gfilter="roshan">Roshan's</button>
         <button class="chip" data-gfilter="anuja">Anuja's</button>
       </div>
@@ -974,6 +981,13 @@
       </select>
     </div>
     <div class="form-group">
+      <label>Type</label>
+      <select id="add-type">
+        <option value="adult">Adult</option>
+        <option value="kid">Kid</option>
+      </select>
+    </div>
+    <div class="form-group">
       <label>Invite to Events</label>
       <div class="event-checkboxes">
         <div class="event-check">
@@ -1010,6 +1024,13 @@
       </select>
     </div>
     <div class="form-group">
+      <label>Type</label>
+      <select id="bulk-type">
+        <option value="adult">Adult</option>
+        <option value="kid">Kid</option>
+      </select>
+    </div>
+    <div class="form-group">
       <label>Names (one per line)</label>
       <textarea id="bulk-names" placeholder="Priya Sharma&#10;Raj Patel&#10;Meena Verma"></textarea>
       <div class="form-hint">Enter one name per line</div>
@@ -1043,7 +1064,26 @@
 <div class="modal-overlay" id="modal-edit">
   <div class="modal">
     <div class="modal-handle"></div>
-    <h2 id="modal-edit-title">Edit Events</h2>
+    <h2 id="modal-edit-title">Edit Guest</h2>
+    <div class="form-group">
+      <label>Full Name</label>
+      <input type="text" id="edit-name" placeholder="e.g. Priya Sharma" autocomplete="off" />
+      <div class="form-error" id="edit-name-error"></div>
+    </div>
+    <div class="form-group">
+      <label>Side</label>
+      <select id="edit-side">
+        <option value="roshan">Roshan's Side</option>
+        <option value="anuja">Anuja's Side</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Type</label>
+      <select id="edit-type">
+        <option value="adult">Adult</option>
+        <option value="kid">Kid</option>
+      </select>
+    </div>
     <div class="form-group">
       <label>Invite to Events</label>
       <div class="event-checkboxes">
@@ -1398,15 +1438,15 @@ function renderEventTab(event) {
   const container = document.getElementById('list-' + event);
 
   // Stats
-  const total  = guests.filter(g => g.events.includes(event)).length;
-  const rCount = guests.filter(g => g.side === 'roshan' && g.events.includes(event)).length;
-  const aCount = guests.filter(g => g.side === 'anuja'  && g.events.includes(event)).length;
+  const total      = guests.filter(g => g.events.includes(event)).length;
+  const adultCount = guests.filter(g => g.events.includes(event) && !g.isKid).length;
+  const kidCount   = guests.filter(g => g.events.includes(event) &&  g.isKid).length;
 
   const idMap = { wedding: 'w', reception: 'r', engagement: 'e' };
   const p = idMap[event];
+  document.getElementById(p + '-adults').textContent = adultCount;
   document.getElementById(p + '-total').textContent  = total;
-  document.getElementById(p + '-roshan').textContent = rCount;
-  document.getElementById(p + '-anuja').textContent  = aCount;
+  document.getElementById(p + '-kids').textContent   = kidCount;
 
   if (list.length === 0) {
     container.innerHTML = `<div class="empty-state"><div class="es-icon">🎊</div><p>No guests here yet.<br>Tap + to add guests.</p></div>`;
@@ -1419,8 +1459,8 @@ function renderEventTab(event) {
       <div class="guest-card ${invited ? '' : 'excluded'}" data-id="${g.id}">
         <div class="avatar ${g.side}">${initials(g.name)}</div>
         <div class="guest-info">
-          <div class="guest-name guest-name-link" data-edit="${g.id}" title="Edit events">${escHtml(g.name)}</div>
-          <div class="guest-meta">${g.side === 'roshan' ? "Roshan's side" : "Anuja's side"}</div>
+          <div class="guest-name guest-name-link" data-edit="${g.id}" title="Edit guest">${escHtml(g.name)}</div>
+          <div class="guest-meta">${g.side === 'roshan' ? "Roshan's side" : "Anuja's side"}${g.isKid ? ' &middot; 👶 Kid' : ''}</div>
         </div>
         <label class="toggle-switch" title="${invited ? 'Remove from event' : 'Add to event'}">
           <input type="checkbox" ${invited ? 'checked' : ''} data-gid="${g.id}" data-ev="${event}" />
@@ -1460,10 +1500,18 @@ function renderEventTab(event) {
 function renderAllGuests() {
   const filter = activeFilters.guests;
   let list = guests;
-  if (filter === 'roshan') list = guests.filter(g => g.side === 'roshan');
-  else if (filter === 'anuja') list = guests.filter(g => g.side === 'anuja');
+  if (filter === 'roshan')  list = guests.filter(g => g.side === 'roshan');
+  else if (filter === 'anuja')  list = guests.filter(g => g.side === 'anuja');
+  else if (filter === 'adults') list = guests.filter(g => !g.isKid);
+  else if (filter === 'kids')   list = guests.filter(g => g.isKid);
 
-  document.getElementById('all-count').textContent = guests.length;
+  const allTotal  = guests.length;
+  const allAdults = guests.filter(g => !g.isKid).length;
+  const allKids   = guests.filter(g =>  g.isKid).length;
+  document.getElementById('all-count').textContent = allTotal;
+  document.getElementById('g-adults').textContent  = allAdults;
+  document.getElementById('g-total').textContent   = allTotal;
+  document.getElementById('g-kids').textContent    = allKids;
 
   const container = document.getElementById('list-all');
 
@@ -1478,9 +1526,9 @@ function renderAllGuests() {
     <div class="guest-card" data-id="${g.id}">
       <div class="avatar ${g.side}">${initials(g.name)}</div>
       <div class="guest-info">
-        <div class="guest-name guest-name-link" data-edit="${g.id}" title="Edit events">${escHtml(g.name)}</div>
+        <div class="guest-name guest-name-link" data-edit="${g.id}" title="Edit guest">${escHtml(g.name)}</div>
         <div class="guest-meta">
-          ${g.side === 'roshan' ? "Roshan's side" : "Anuja's side"} &middot;
+          ${g.side === 'roshan' ? "Roshan's side" : "Anuja's side"}${g.isKid ? ' &middot; 👶 Kid' : ''} &middot;
           ${['wedding','reception','engagement'].filter(e => g.events.includes(e)).map(e => eventLabels[e]).join(' ') || 'No events'}
         </div>
       </div>
@@ -1510,10 +1558,11 @@ function exportGuestsCSV() {
   if (filter === 'roshan') list = guests.filter(g => g.side === 'roshan');
   else if (filter === 'anuja') list = guests.filter(g => g.side === 'anuja');
 
-  const rows = [['Name', 'Side', 'Wedding', 'Reception', 'Engagement']];
+  const rows = [['Name', 'Type', 'Side', 'Wedding', 'Reception', 'Engagement']];
   list.forEach(g => {
     rows.push([
       g.name,
+      g.isKid ? 'Kid' : 'Adult',
       g.side === 'roshan' ? "Roshan's" : "Anuja's",
       g.events.includes('wedding')    ? 'Yes' : 'No',
       g.events.includes('reception')  ? 'Yes' : 'No',
@@ -1585,6 +1634,7 @@ function openAddModal(side) {
   document.getElementById('add-name').value = '';
   document.getElementById('add-name-error').textContent = '';
   document.getElementById('add-side').value = side || 'roshan';
+  document.getElementById('add-type').value = 'adult';
   document.getElementById('add-ev-wedding').checked    = true;
   document.getElementById('add-ev-reception').checked  = true;
   document.getElementById('add-ev-engagement').checked = false;
@@ -1609,10 +1659,11 @@ document.getElementById('modal-add-save').addEventListener('click', () => {
   }
   errorEl.textContent = '';
   const side = document.getElementById('add-side').value;
+  const isKid = document.getElementById('add-type').value === 'kid';
   const events = ['wedding','reception','engagement'].filter(ev =>
     document.getElementById('add-ev-' + ev).checked
   );
-  guests.push({ id: uid(), name, side, events, addedBy: getCurrentUserIdentifier(), addedAt: Date.now() });
+  guests.push({ id: uid(), name, side, isKid, events, addedBy: getCurrentUserIdentifier(), addedAt: Date.now() });
   saveGuests();
   closeModal('modal-add');
   renderAll();
@@ -1624,6 +1675,7 @@ function openBulkModal() {
   document.getElementById('bulk-names').value = '';
   document.getElementById('bulk-error').textContent = '';
   document.getElementById('bulk-side').value = 'roshan';
+  document.getElementById('bulk-type').value = 'adult';
   document.getElementById('bulk-ev-wedding').checked    = true;
   document.getElementById('bulk-ev-reception').checked  = true;
   document.getElementById('bulk-ev-engagement').checked = false;
@@ -1641,6 +1693,7 @@ document.getElementById('modal-bulk-save').addEventListener('click', () => {
   const names = raw.split('\n').map(s => s.trim()).filter(Boolean);
   if (!names.length) { document.getElementById('bulk-names').focus(); return; }
   const side = document.getElementById('bulk-side').value;
+  const isKid = document.getElementById('bulk-type').value === 'kid';
   const events = ['wedding','reception','engagement'].filter(ev =>
     document.getElementById('bulk-ev-' + ev).checked
   );
@@ -1662,7 +1715,7 @@ document.getElementById('modal-bulk-save').addEventListener('click', () => {
     return;
   }
   bulkErrorEl.textContent = '';
-  toAdd.forEach(name => guests.push({ id: uid(), name, side, events, addedBy, addedAt }));
+  toAdd.forEach(name => guests.push({ id: uid(), name, side, isKid, events, addedBy, addedAt }));
   saveGuests();
   closeModal('modal-bulk');
   renderAll();
@@ -1678,7 +1731,11 @@ function openEditModal(id) {
   const g = guests.find(x => x.id === id);
   if (!g) return;
   editingGuestId = id;
-  document.getElementById('modal-edit-title').textContent = `Edit Events — ${g.name}`;
+  document.getElementById('modal-edit-title').textContent = `Edit Guest — ${g.name}`;
+  document.getElementById('edit-name').value              = g.name;
+  document.getElementById('edit-name-error').textContent  = '';
+  document.getElementById('edit-side').value              = g.side;
+  document.getElementById('edit-type').value              = g.isKid ? 'kid' : 'adult';
   document.getElementById('edit-ev-wedding').checked    = g.events.includes('wedding');
   document.getElementById('edit-ev-reception').checked  = g.events.includes('reception');
   document.getElementById('edit-ev-engagement').checked = g.events.includes('engagement');
@@ -1694,6 +1751,18 @@ document.getElementById('modal-edit-save').addEventListener('click', () => {
   if (!editingGuestId) return;
   const g = guests.find(x => x.id === editingGuestId);
   if (!g) return;
+  const newName = document.getElementById('edit-name').value.trim();
+  const errorEl = document.getElementById('edit-name-error');
+  if (!newName) { document.getElementById('edit-name').focus(); return; }
+  const newNameLower = newName.toLowerCase();
+  if (newNameLower !== g.name.toLowerCase() && guests.some(x => x.id !== editingGuestId && x.name.toLowerCase() === newNameLower)) {
+    errorEl.textContent = `"${escHtml(newName)}" is already on the guest list.`;
+    return;
+  }
+  errorEl.textContent = '';
+  g.name   = newName;
+  g.side   = document.getElementById('edit-side').value;
+  g.isKid  = document.getElementById('edit-type').value === 'kid';
   g.events = ['wedding','reception','engagement'].filter(ev =>
     document.getElementById('edit-ev-' + ev).checked
   );
