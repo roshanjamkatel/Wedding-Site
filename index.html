@@ -921,6 +921,163 @@
       max-height: 80vh;
       overflow-y: auto;
     }
+
+    /* ── Stats customize button ──────────────────────────────────── */
+    .stat-config-btn {
+      background: none;
+      border: 1.5px dashed var(--border);
+      border-radius: 12px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: .95rem;
+      color: var(--text-s);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color .15s, color .15s;
+    }
+
+    .stat-config-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* ── Custom stats row ─────────────────────────────────────────── */
+    .custom-stats-bar {
+      display: none;
+      margin-bottom: 16px;
+      margin-top: -8px;
+    }
+
+    .custom-stats-bar .stat-pill {
+      background: var(--surface);
+      border: 1.5px solid var(--accent);
+    }
+
+    /* ── Custom stats section in prefs panel ─────────────────────── */
+    .stats-prefs-panel {
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .custom-stats-section {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .custom-stats-section h4 {
+      font-size: .78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--text-s);
+      margin-bottom: 10px;
+    }
+
+    .custom-stat-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .custom-stat-item:last-child { border-bottom: none; }
+
+    .custom-stat-info { display: flex; flex-direction: column; gap: 2px; }
+    .custom-stat-name { font-size: .9rem; font-weight: 600; color: var(--text); }
+    .custom-stat-type { font-size: .72rem; color: var(--text-s); }
+
+    .btn-del-custom {
+      background: none;
+      border: none;
+      font-size: 1rem;
+      cursor: pointer;
+      color: #ccc;
+      padding: 4px;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .btn-del-custom:hover { color: var(--danger); }
+
+    .btn-add-custom-stat {
+      width: 100%;
+      padding: 11px;
+      border: 1.5px dashed var(--border);
+      border-radius: var(--radius);
+      background: none;
+      font-size: .88rem;
+      font-weight: 600;
+      color: var(--primary);
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+      margin-top: 12px;
+    }
+
+    .btn-add-custom-stat:hover {
+      background: var(--accent);
+      border-color: var(--primary);
+    }
+
+    .add-custom-stat-form {
+      display: none;
+      margin-top: 12px;
+      padding: 14px;
+      background: var(--bg);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+
+    .add-custom-stat-form.visible { display: block; }
+
+    .add-custom-stat-form .cstat-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .add-custom-stat-form .cstat-row input,
+    .add-custom-stat-form .cstat-row select {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: .85rem;
+      color: var(--text);
+      background: var(--surface);
+      outline: none;
+      font-family: inherit;
+      transition: border-color .2s;
+    }
+
+    .add-custom-stat-form .cstat-row input:focus,
+    .add-custom-stat-form .cstat-row select:focus { border-color: var(--primary); }
+
+    .add-custom-stat-form .cstat-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .add-custom-stat-form .cstat-actions button {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      font-size: .85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1.5px solid var(--border);
+      background: none;
+      color: var(--text-s);
+    }
+
+    .add-custom-stat-form .cstat-actions .btn-confirm-cstat {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
   </style>
 </head>
 <body>
@@ -992,7 +1149,9 @@
       <div class="stat-pill" data-stat="kids"><div class="num" id="w-kids">0</div><div class="lbl">Kids</div></div>
       <div class="stat-pill" data-stat="roshan"><div class="num" id="w-roshan">0</div><div class="lbl">Roshan</div></div>
       <div class="stat-pill" data-stat="anuja"><div class="num" id="w-anuja">0</div><div class="lbl">Anuja</div></div>
+      <button class="stat-config-btn" data-stats-config title="Customize stats">⚙️</button>
     </div>
+    <div class="stats-bar custom-stats-bar" id="custom-bar-wedding"></div>
     <div class="filter-row">
       <button class="chip active" data-event="wedding" data-filter="all">All</button>
       <button class="chip" data-event="wedding" data-filter="roshan">Roshan's Side</button>
@@ -1011,7 +1170,9 @@
       <div class="stat-pill" data-stat="kids"><div class="num" id="r-kids">0</div><div class="lbl">Kids</div></div>
       <div class="stat-pill" data-stat="roshan"><div class="num" id="r-roshan">0</div><div class="lbl">Roshan</div></div>
       <div class="stat-pill" data-stat="anuja"><div class="num" id="r-anuja">0</div><div class="lbl">Anuja</div></div>
+      <button class="stat-config-btn" data-stats-config title="Customize stats">⚙️</button>
     </div>
+    <div class="stats-bar custom-stats-bar" id="custom-bar-reception"></div>
     <div class="filter-row">
       <button class="chip active" data-event="reception" data-filter="all">All</button>
       <button class="chip" data-event="reception" data-filter="roshan">Roshan's Side</button>
@@ -1030,7 +1191,9 @@
       <div class="stat-pill" data-stat="kids"><div class="num" id="e-kids">0</div><div class="lbl">Kids</div></div>
       <div class="stat-pill" data-stat="roshan"><div class="num" id="e-roshan">0</div><div class="lbl">Roshan</div></div>
       <div class="stat-pill" data-stat="anuja"><div class="num" id="e-anuja">0</div><div class="lbl">Anuja</div></div>
+      <button class="stat-config-btn" data-stats-config title="Customize stats">⚙️</button>
     </div>
+    <div class="stats-bar custom-stats-bar" id="custom-bar-engagement"></div>
     <div class="filter-row">
       <button class="chip active" data-event="engagement" data-filter="all">All</button>
       <button class="chip" data-event="engagement" data-filter="roshan">Roshan's Side</button>
@@ -1057,7 +1220,9 @@
         <div class="stat-pill" data-stat="kids"><div class="num" id="g-kids">0</div><div class="lbl">Kids</div></div>
         <div class="stat-pill" data-stat="roshan"><div class="num" id="g-roshan">0</div><div class="lbl">Roshan</div></div>
         <div class="stat-pill" data-stat="anuja"><div class="num" id="g-anuja">0</div><div class="lbl">Anuja</div></div>
+        <button class="stat-config-btn" data-stats-config title="Customize stats">⚙️</button>
       </div>
+      <div class="stats-bar custom-stats-bar" id="custom-bar-guests"></div>
       <div class="filter-row">
         <button class="chip active" data-gfilter="all">All</button>
         <button class="chip" data-gfilter="adults">Adults</button>
@@ -1284,6 +1449,27 @@
         <span class="toggle-slider"></span>
       </label>
     </div>
+    <div class="custom-stats-section">
+      <h4>Custom Stats</h4>
+      <div id="custom-stat-items"></div>
+      <button class="btn-add-custom-stat" id="btn-add-custom-stat">+ Add Custom Stat</button>
+      <div class="add-custom-stat-form" id="add-custom-stat-form">
+        <div class="cstat-row">
+          <input type="text" id="custom-stat-label" placeholder="Label (e.g. Adults)" maxlength="20" />
+          <select id="custom-stat-type">
+            <option value="adults">Adults (invited)</option>
+            <option value="not_invited">Not Invited</option>
+            <option value="invited_all">All 3 Events</option>
+            <option value="roshan_kids">Roshan's Kids</option>
+            <option value="anuja_kids">Anuja's Kids</option>
+          </select>
+        </div>
+        <div class="cstat-actions">
+          <button id="btn-cancel-cstat">Cancel</button>
+          <button class="btn-confirm-cstat" id="btn-confirm-cstat">Add</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1377,7 +1563,7 @@ let unsubscribeErrors = null;
 let recentErrors = [];
 let searchQuery = '';
 const DEFAULT_STAT_PREFS = { total: true, kids: true, roshan: true, anuja: true };
-let userPrefs = { visibleStats: Object.assign({}, DEFAULT_STAT_PREFS) };
+let userPrefs = { visibleStats: Object.assign({}, DEFAULT_STAT_PREFS), customStats: [] };
 
 function sharedDocRef() {
   return db.collection('shared').doc('guestList');
@@ -1533,7 +1719,7 @@ function showLogin() {
     unsubscribeErrors = null;
   }
   recentErrors = [];
-  userPrefs = { visibleStats: Object.assign({}, DEFAULT_STAT_PREFS) };
+  userPrefs = { visibleStats: Object.assign({}, DEFAULT_STAT_PREFS), customStats: [] };
   searchQuery = '';
   document.getElementById('search-input').value = '';
   document.getElementById('search-clear').classList.remove('visible');
@@ -1605,6 +1791,9 @@ const statsPrefsModal = document.getElementById('modal-stats-prefs');
 
 document.getElementById('stats-prefs-btn').addEventListener('click', () => {
   applyStatPrefs(); // sync checkboxes with current state
+  renderCustomStatItems();
+  document.getElementById('add-custom-stat-form').classList.remove('visible');
+  document.getElementById('btn-add-custom-stat').style.display = '';
   statsPrefsModal.style.display = 'flex';
 });
 
@@ -1681,9 +1870,13 @@ function loadUserPrefs() {
       if (parsed.visibleStats) {
         userPrefs.visibleStats = Object.assign({}, DEFAULT_STAT_PREFS, parsed.visibleStats);
       }
+      if (Array.isArray(parsed.customStats)) {
+        userPrefs.customStats = parsed.customStats;
+      }
     } catch (e) { console.warn('Could not parse stored stat preferences:', e); }
   }
   applyStatPrefs();
+  syncCustomStatPills();
 }
 
 function saveUserPrefs() {
@@ -1702,6 +1895,131 @@ function applyStatPrefs() {
     if (cb) cb.checked = show;
   });
 }
+
+/* ── Custom Statistics ───────────────────────────────────────────── */
+const CUSTOM_STAT_TYPE_LABELS = {
+  adults:      'Adults (invited)',
+  not_invited: 'Not Invited',
+  invited_all: 'All 3 Events',
+  roshan_kids: "Roshan's Kids",
+  anuja_kids:  "Anuja's Kids"
+};
+
+function computeCustomStatValue(filterType, event) {
+  switch (filterType) {
+    case 'adults':
+      if (event === 'guests') return guests.filter(g => !g.isKid).length;
+      return guests.filter(g => g.events.includes(event) && !g.isKid).length;
+    case 'not_invited':
+      if (event === 'guests') return guests.filter(g => g.events.length === 0).length;
+      return guests.filter(g => !g.events.includes(event)).length;
+    case 'invited_all':
+      return guests.filter(g => ['wedding','reception','engagement'].every(e => g.events.includes(e))).length;
+    case 'roshan_kids':
+      return guests.filter(g => g.side === 'roshan' && g.isKid).length;
+    case 'anuja_kids':
+      return guests.filter(g => g.side === 'anuja' && g.isKid).length;
+    default:
+      return 0;
+  }
+}
+
+function syncCustomStatPills() {
+  ['wedding', 'reception', 'engagement', 'guests'].forEach(event => {
+    const container = document.getElementById('custom-bar-' + event);
+    if (!container) return;
+    const customStats = userPrefs.customStats || [];
+    if (customStats.length === 0) {
+      container.style.display = 'none';
+      container.innerHTML = '';
+      return;
+    }
+    container.style.display = 'flex';
+    container.innerHTML = customStats.map(stat => `
+      <div class="stat-pill">
+        <div class="num" id="custom-num-${stat.id}-${event}">0</div>
+        <div class="lbl">${escHtml(stat.label)}</div>
+      </div>`).join('');
+  });
+}
+
+function updateCustomStatValues(event) {
+  (userPrefs.customStats || []).forEach(stat => {
+    const el = document.getElementById('custom-num-' + stat.id + '-' + event);
+    if (el) el.textContent = computeCustomStatValue(stat.filterType, event);
+  });
+}
+
+function renderCustomStatItems() {
+  const container = document.getElementById('custom-stat-items');
+  const customStats = userPrefs.customStats || [];
+  if (customStats.length === 0) {
+    container.innerHTML = '<div style="font-size:.82rem;color:var(--text-s);padding:6px 0">No custom stats yet.</div>';
+    return;
+  }
+  container.innerHTML = customStats.map(stat => `
+    <div class="custom-stat-item">
+      <div class="custom-stat-info">
+        <div class="custom-stat-name">${escHtml(stat.label)}</div>
+        <div class="custom-stat-type">${escHtml(CUSTOM_STAT_TYPE_LABELS[stat.filterType] || stat.filterType)}</div>
+      </div>
+      <button class="btn-del-custom" data-del-custom="${escHtml(stat.id)}" title="Remove this stat">🗑</button>
+    </div>`).join('');
+  container.querySelectorAll('[data-del-custom]').forEach(btn => {
+    btn.addEventListener('click', () => removeCustomStat(btn.dataset.delCustom));
+  });
+}
+
+function addCustomStat(label, filterType) {
+  if (!userPrefs.customStats) userPrefs.customStats = [];
+  userPrefs.customStats.push({ id: uid(), label, filterType });
+  saveUserPrefs();
+  syncCustomStatPills();
+  renderAll();
+  renderCustomStatItems();
+}
+
+function removeCustomStat(id) {
+  userPrefs.customStats = (userPrefs.customStats || []).filter(s => s.id !== id);
+  saveUserPrefs();
+  syncCustomStatPills();
+  renderAll();
+  renderCustomStatItems();
+}
+
+// Per-tab ⚙️ customize buttons
+document.querySelectorAll('[data-stats-config]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    applyStatPrefs();
+    renderCustomStatItems();
+    document.getElementById('add-custom-stat-form').classList.remove('visible');
+    document.getElementById('btn-add-custom-stat').style.display = '';
+    statsPrefsModal.style.display = 'flex';
+  });
+});
+
+// Add custom stat form controls
+document.getElementById('btn-add-custom-stat').addEventListener('click', () => {
+  document.getElementById('add-custom-stat-form').classList.add('visible');
+  document.getElementById('btn-add-custom-stat').style.display = 'none';
+  document.getElementById('custom-stat-label').value = '';
+  document.getElementById('custom-stat-type').value = 'adults';
+  setTimeout(() => document.getElementById('custom-stat-label').focus(), 50);
+});
+
+document.getElementById('btn-cancel-cstat').addEventListener('click', () => {
+  document.getElementById('add-custom-stat-form').classList.remove('visible');
+  document.getElementById('btn-add-custom-stat').style.display = '';
+});
+
+document.getElementById('btn-confirm-cstat').addEventListener('click', () => {
+  const label = document.getElementById('custom-stat-label').value.trim();
+  if (!label) { document.getElementById('custom-stat-label').focus(); return; }
+  const filterType = document.getElementById('custom-stat-type').value;
+  document.getElementById('add-custom-stat-form').classList.remove('visible');
+  document.getElementById('btn-add-custom-stat').style.display = '';
+  addCustomStat(label, filterType);
+});
 
 /* ── Rendering ───────────────────────────────────────────────────── */
 function sortByName(list) {
@@ -1749,6 +2067,8 @@ function renderEventTab(event) {
   document.getElementById(p + '-roshan').textContent = roshanCount;
   document.getElementById(p + '-anuja').textContent  = anujaCount;
   document.getElementById(p + '-kids').textContent   = kidCount;
+
+  updateCustomStatValues(event);
 
   if (list.length === 0) {
     container.innerHTML = searchQuery
@@ -1825,6 +2145,8 @@ function renderAllGuests() {
   document.getElementById('g-roshan').textContent  = allRoshan;
   document.getElementById('g-anuja').textContent   = allAnuja;
   document.getElementById('g-kids').textContent    = allKids;
+
+  updateCustomStatValues('guests');
 
   const container = document.getElementById('list-all');
 
