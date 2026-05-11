@@ -1704,6 +1704,12 @@ function applyStatPrefs() {
 }
 
 /* ── Rendering ───────────────────────────────────────────────────── */
+function sortByName(list) {
+  return list.slice().sort((a, b) => nameSortDir === 'asc'
+    ? a.name.localeCompare(b.name)
+    : b.name.localeCompare(a.name));
+}
+
 function renderAll() {
   renderEventTab('wedding');
   renderEventTab('reception');
@@ -1727,9 +1733,7 @@ function renderEventTab(event) {
     list = list.filter(g => g.name.toLowerCase().includes(q));
   }
 
-  list = list.slice().sort((a, b) => nameSortDir === 'asc'
-    ? a.name.localeCompare(b.name)
-    : b.name.localeCompare(a.name));
+  list = sortByName(list);
 
   const container = document.getElementById('list-' + event);
 
@@ -1810,9 +1814,7 @@ function renderAllGuests() {
     list = list.filter(g => g.name.toLowerCase().includes(q));
   }
 
-  list = list.slice().sort((a, b) => nameSortDir === 'asc'
-    ? a.name.localeCompare(b.name)
-    : b.name.localeCompare(a.name));
+  list = sortByName(list);
 
   const allTotal  = guests.length;
   const allRoshan = guests.filter(g => g.side === 'roshan' && !g.isKid).length;
