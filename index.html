@@ -1937,7 +1937,7 @@ function syncCustomStatPills() {
     container.style.display = 'flex';
     container.innerHTML = customStats.map(stat => `
       <div class="stat-pill">
-        <div class="num" id="custom-num-${escHtml(stat.id)}-${event}">0</div>
+        <div class="num" id="custom-num-${stat.id}-${event}">0</div>
         <div class="lbl">${escHtml(stat.label)}</div>
       </div>`).join('');
   });
