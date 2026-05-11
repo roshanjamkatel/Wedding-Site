@@ -438,6 +438,11 @@
       color: #fff;
     }
 
+    .chip.sort-chip {
+      margin-left: auto;
+      border-style: dashed;
+    }
+
     /* Guest list */
     .guest-list { display: flex; flex-direction: column; gap: 8px; }
 
@@ -994,6 +999,7 @@
       <button class="chip" data-event="wedding" data-filter="anuja">Anuja's Side</button>
       <button class="chip" data-event="wedding" data-filter="invited">Invited ✓</button>
       <button class="chip" data-event="wedding" data-filter="notinvited">Not Invited</button>
+      <button class="chip sort-chip" data-sort-btn title="Sort by name">A → Z</button>
     </div>
     <div class="guest-list" id="list-wedding"></div>
   </section>
@@ -1012,6 +1018,7 @@
       <button class="chip" data-event="reception" data-filter="anuja">Anuja's Side</button>
       <button class="chip" data-event="reception" data-filter="invited">Invited ✓</button>
       <button class="chip" data-event="reception" data-filter="notinvited">Not Invited</button>
+      <button class="chip sort-chip" data-sort-btn title="Sort by name">A → Z</button>
     </div>
     <div class="guest-list" id="list-reception"></div>
   </section>
@@ -1030,6 +1037,7 @@
       <button class="chip" data-event="engagement" data-filter="anuja">Anuja's Side</button>
       <button class="chip" data-event="engagement" data-filter="invited">Invited ✓</button>
       <button class="chip" data-event="engagement" data-filter="notinvited">Not Invited</button>
+      <button class="chip sort-chip" data-sort-btn title="Sort by name">A → Z</button>
     </div>
     <div class="guest-list" id="list-engagement"></div>
   </section>
@@ -1056,6 +1064,7 @@
         <button class="chip" data-gfilter="kids">Kids</button>
         <button class="chip" data-gfilter="roshan">Roshan's</button>
         <button class="chip" data-gfilter="anuja">Anuja's</button>
+        <button class="chip sort-chip" data-sort-btn title="Sort by name">A → Z</button>
       </div>
       <div class="guest-list" id="list-all"></div>
     </div>
@@ -1614,6 +1623,12 @@ statsPrefsModal.addEventListener('click', e => {
 /* ── Tabs ────────────────────────────────────────────────────────── */
 let activeTab = 'wedding';
 const activeFilters = { wedding: 'all', reception: 'all', engagement: 'all', guests: 'all' };
+let nameSortDir = 'asc'; // 'asc' | 'desc'
+
+function updateSortBtns() {
+  const label = nameSortDir === 'asc' ? 'A → Z' : 'Z → A';
+  document.querySelectorAll('[data-sort-btn]').forEach(btn => { btn.textContent = label; });
+}
 
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -1643,6 +1658,15 @@ document.querySelectorAll('.chip[data-gfilter]').forEach(chip => {
     chip.classList.add('active');
     activeFilters.guests = chip.dataset.gfilter;
     renderAllGuests();
+  });
+});
+
+/* ── Name sort ───────────────────────────────────────────────────── */
+document.querySelectorAll('[data-sort-btn]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    nameSortDir = nameSortDir === 'asc' ? 'desc' : 'asc';
+    updateSortBtns();
+    renderAll();
   });
 });
 
@@ -1702,6 +1726,10 @@ function renderEventTab(event) {
     const q = searchQuery.toLowerCase();
     list = list.filter(g => g.name.toLowerCase().includes(q));
   }
+
+  list = list.slice().sort((a, b) => nameSortDir === 'asc'
+    ? a.name.localeCompare(b.name)
+    : b.name.localeCompare(a.name));
 
   const container = document.getElementById('list-' + event);
 
@@ -1781,6 +1809,10 @@ function renderAllGuests() {
     const q = searchQuery.toLowerCase();
     list = list.filter(g => g.name.toLowerCase().includes(q));
   }
+
+  list = list.slice().sort((a, b) => nameSortDir === 'asc'
+    ? a.name.localeCompare(b.name)
+    : b.name.localeCompare(a.name));
 
   const allTotal  = guests.length;
   const allRoshan = guests.filter(g => g.side === 'roshan' && !g.isKid).length;
