@@ -1,8 +1,6 @@
 # Wedding-Site 💍
 
-Private wedding-planning app for Roshan & Anuja.
-
-- **Access**: Google Sign-In only — restricted to `roshan.jamkatel@gmail.com`
+Private wedding-planning app for 
 - **Data**: Cloud Firestore (online, synced across every device you sign in to)
 - **No passwords** and **no guest data** are stored in this repository
 
