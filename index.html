@@ -20,6 +20,7 @@
       --danger:    #c0392b;
       --radius:    14px;
       --shadow:    0 2px 16px rgba(0,0,0,.08);
+      --guest-chip-max-width: 200px;
     }
 
     html, body {
@@ -492,7 +493,7 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 200px;
+      max-width: var(--guest-chip-max-width);
     }
 
     .guest-name-link {
@@ -514,7 +515,7 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 200px;
+      max-width: var(--guest-chip-max-width);
     }
 
     .toggle-switch {
