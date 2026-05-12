@@ -1115,7 +1115,7 @@
 <!-- Loading overlay -->
 <div id="loading-overlay">
   <div class="spinner"></div>
-  <span>Loading…</span>
+  <span>Loading...</span>
 </div>
 
 <!-- Pull-to-refresh indicator -->
@@ -1532,7 +1532,7 @@ function getCurrentUserIdentifier() {
     }
     return `Device ${deviceId.slice(0, 8)}`;
   } catch (_e) {
-    return 'Device unknown';
+    return 'Device (storage unavailable)';
   }
 }
 
@@ -1544,14 +1544,22 @@ const DEFAULT_STAT_PREFS = { total: true, kids: true, roshan: true, anuja: true 
 let userPrefs = { visibleStats: Object.assign({}, DEFAULT_STAT_PREFS), customStats: [] };
 
 function loadGuests() {
+  let stored = null;
   try {
-    const stored = localStorage.getItem(GUESTS_STORAGE_KEY);
+    stored = localStorage.getItem(GUESTS_STORAGE_KEY);
     const parsed = stored ? JSON.parse(stored) : [];
     guests = Array.isArray(parsed) ? parsed : [];
   } catch (e) {
+    if (stored) {
+      try {
+        localStorage.setItem(`${GUESTS_STORAGE_KEY}_backup`, stored);
+      } catch (_backupErr) {
+        // Ignore backup failures.
+      }
+    }
     guests = [];
     console.error('Failed to load guests', e);
-    showSaveToast('⚠️ Saved guest data is corrupted and could not be loaded.');
+    showSaveToast('⚠️ Saved guest data is corrupted and could not be loaded. Starting with an empty guest list.');
     saveError('loadGuests', e);
   }
 }
