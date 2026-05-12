@@ -443,30 +443,39 @@
       border-style: dashed;
     }
 
-    /* Guest list */
-    .guest-list { display: flex; flex-direction: column; gap: 8px; }
+    /* Guest list – pill chip layout */
+    .guest-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-content: flex-start;
+    }
 
     .guest-card {
       background: var(--surface);
-      border-radius: var(--radius);
-      padding: 14px 14px 14px 16px;
-      display: flex;
+      border-radius: 9999px;
+      padding: 5px 12px 5px 5px;
+      display: inline-flex;
       align-items: center;
-      gap: 12px;
-      box-shadow: 0 1px 6px rgba(0,0,0,.06);
-      transition: opacity .15s;
+      gap: 8px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.07);
+      border: 1px solid var(--border);
+      transition: opacity .15s, box-shadow .15s;
+      max-width: 100%;
     }
 
-    .guest-card.excluded { opacity: .5; }
+    .guest-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,.11); }
+
+    .guest-card.excluded { opacity: .45; }
 
     .avatar {
-      width: 40px;
-      height: 40px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: .85rem;
+      font-size: .75rem;
       font-weight: 700;
       flex-shrink: 0;
       color: #fff;
@@ -475,14 +484,15 @@
     .avatar.roshan { background: var(--primary); }
     .avatar.anuja  { background: #b07fa8; }
 
-    .guest-info { flex: 1; min-width: 0; }
+    .guest-info { flex: 0 1 auto; min-width: 0; }
 
     .guest-name {
-      font-size: .92rem;
+      font-size: .87rem;
       font-weight: 600;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      max-width: 200px;
     }
 
     .guest-name-link {
@@ -498,9 +508,13 @@
     }
 
     .guest-meta {
-      font-size: .72rem;
+      font-size: .70rem;
       color: var(--text-s);
-      margin-top: 2px;
+      margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 200px;
     }
 
     .toggle-switch {
