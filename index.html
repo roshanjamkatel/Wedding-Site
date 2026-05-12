@@ -1532,7 +1532,7 @@ function getCurrentUserIdentifier() {
     }
     return `Device ${deviceId.slice(0, 8)}`;
   } catch (_e) {
-    return 'Device (storage unavailable)';
+    return 'Device (localStorage unavailable)';
   }
 }
 
@@ -1550,16 +1550,22 @@ function loadGuests() {
     const parsed = stored ? JSON.parse(stored) : [];
     guests = Array.isArray(parsed) ? parsed : [];
   } catch (e) {
+    let backupSaved = false;
     if (stored) {
       try {
         localStorage.setItem(`${GUESTS_STORAGE_KEY}_backup`, stored);
+        backupSaved = true;
       } catch (_backupErr) {
-        // Ignore backup failures.
+        console.error('Failed to back up corrupted guest data', _backupErr);
       }
     }
     guests = [];
     console.error('Failed to load guests', e);
-    showSaveToast('⚠️ Saved guest data is corrupted and could not be loaded. Starting with an empty guest list.');
+    showSaveToast(
+      backupSaved
+        ? '⚠️ Saved guest data is corrupted and could not be loaded. A backup was saved, and the app started with an empty guest list.'
+        : '⚠️ Saved guest data is corrupted and could not be loaded. The app started with an empty guest list.'
+    );
     saveError('loadGuests', e);
   }
 }
