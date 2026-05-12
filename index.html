@@ -187,7 +187,7 @@
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ── App Shell ───────────────────────────────────────────────── */
-    #app { display: none; min-height: 100dvh; flex-direction: column; }
+    #app { display: flex; min-height: 100dvh; flex-direction: column; }
 
     /* Header */
     .app-header {
@@ -1112,24 +1112,10 @@
 </head>
 <body>
 
-<!-- ── Login ─────────────────────────────────────────────────────── -->
-<div id="login-screen">
-  <div class="login-card">
-    <div class="login-emoji">💍</div>
-    <h1>Roshan &amp; Anuja</h1>
-    <p>Sign in to manage our wedding guest list</p>
-    <div class="login-error" id="login-error"></div>
-    <button class="btn-google" id="login-btn">
-      <svg width="20" height="20" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></g></svg>
-      <span class="google-btn-label">Sign in with Google</span>
-    </button>
-  </div>
-</div>
-
 <!-- Loading overlay -->
 <div id="loading-overlay">
   <div class="spinner"></div>
-  <span>Loading your data…</span>
+  <span>Loading…</span>
 </div>
 
 <!-- Pull-to-refresh indicator -->
@@ -1151,7 +1137,6 @@
     <div class="header-actions">
       <button class="btn-icon" id="search-btn" title="Search guests">🔍</button>
       <button class="btn-icon" id="stats-prefs-btn" title="Customize Stats">📊</button>
-      <button class="btn-icon" id="logout-btn" title="Logout">🔓</button>
     </div>
   </header>
 
@@ -1514,54 +1499,14 @@
   </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-
 <script>
 /* ═══════════════════════════════════════════════════════════════════
    Wedding Planner — Roshan & Anuja
-   Auth:  Firebase Google Sign-In (any authenticated Google account)
-   Data:  Cloud Firestore  (shared, online, synced across all devices)
-
-   SETUP: Add your Firebase config values as GitHub Actions Secrets
-   (see README.md). The workflow will inject them at deploy time.
+   Data:  Browser localStorage (single-device persistence)
 ═══════════════════════════════════════════════════════════════════ */
 
-// ── Firebase Configuration ─────────────────────────────────────────
-// Values are injected at deploy time by GitHub Actions (see .github/workflows/deploy.yml).
-// The %%PLACEHOLDER%% markers below are replaced with real values from GitHub Secrets.
-// Get your values from: Firebase Console → Project Settings → Your Apps → Web App
-const FIREBASE_CONFIG = {
-  apiKey:            "%%FIREBASE_API_KEY%%",
-  authDomain:        "%%FIREBASE_AUTH_DOMAIN%%",
-  projectId:         "%%FIREBASE_PROJECT_ID%%",
-  storageBucket:     "%%FIREBASE_STORAGE_BUCKET%%",
-  messagingSenderId: "%%FIREBASE_MESSAGING_SENDER_ID%%",
-  appId:             "%%FIREBASE_APP_ID%%"
-};
-
-// ── Firebase Init ──────────────────────────────────────────────────
-firebase.initializeApp(FIREBASE_CONFIG);
-const auth = firebase.auth();
-const db   = firebase.firestore();
-
-// Detect uninjected placeholders (deployment without secrets configured)
-(function checkConfig() {
-  if (Object.values(FIREBASE_CONFIG).some(v => String(v).includes('%%'))) {
-    const el = document.getElementById('login-error');
-    el.textContent = '⚠️ Firebase is not configured. Please configure your Firebase credentials and redeploy (see README).';
-    const btn = document.getElementById('login-btn');
-    if (btn) btn.disabled = true;
-  }
-})();
-
-// Enable offline persistence — data loads from local cache on repeat visits
-db.enablePersistence({ synchronizeTabs: true }).catch(err => {
-  if (err.code !== 'failed-precondition' && err.code !== 'unimplemented') {
-    console.warn('Firestore persistence unavailable:', err);
-  }
-});
+const GUESTS_STORAGE_KEY = 'weddingGuestList';
+const STAT_PREFS_STORAGE_KEY = 'statPrefs_local';
 
 // ── Helpers ────────────────────────────────────────────────────────
 function uid() {
@@ -1578,46 +1523,25 @@ function escHtml(s) {
 }
 
 function getCurrentUserIdentifier() {
-  return currentUser?.displayName || currentUser?.email || 'Unknown';
+  return 'Local device';
 }
 
 // ── State ──────────────────────────────────────────────────────────
 let guests = [];
-let currentUser = null;
-let unsubscribeSnapshot = null;
-let unsubscribeErrors = null;
 let recentErrors = [];
 let searchQuery = '';
 const DEFAULT_STAT_PREFS = { total: true, kids: true, roshan: true, anuja: true };
 let userPrefs = { visibleStats: Object.assign({}, DEFAULT_STAT_PREFS), customStats: [] };
 
-function sharedDocRef() {
-  return db.collection('shared').doc('guestList');
-}
-
-// ── Real-time listener ─────────────────────────────────────────────
-function subscribeToGuests(onReady) {
-  if (unsubscribeSnapshot) {
-    unsubscribeSnapshot();
-    unsubscribeSnapshot = null;
+function loadGuests() {
+  try {
+    const stored = localStorage.getItem(GUESTS_STORAGE_KEY);
+    const parsed = stored ? JSON.parse(stored) : [];
+    guests = Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    guests = [];
+    console.error('Failed to load guests', e);
   }
-  let firstSnapshot = true;
-  unsubscribeSnapshot = sharedDocRef().onSnapshot(snap => {
-    guests = snap.exists ? (snap.data().guests || []) : [];
-    renderAll();
-    if (firstSnapshot) {
-      firstSnapshot = false;
-      if (onReady) onReady();
-    }
-  }, err => {
-    console.error('Firestore listen error', err);
-    showSaveToast('⚠️ Could not connect to database — changes may not sync');
-    if (currentUser) saveError('subscribeToGuests', err);
-    if (firstSnapshot) {
-      firstSnapshot = false;
-      if (onReady) onReady();
-    }
-  });
 }
 
 function showSaveToast(message) {
@@ -1627,43 +1551,33 @@ function showSaveToast(message) {
   setTimeout(() => toastEl.classList.remove('show'), 4000);
 }
 
-async function saveError(operation, error) {
-  if (!currentUser) return;
+function saveError(operation, error) {
   const errorEntry = {
     operation: operation,
     message:   error.message || String(error),
     code:      error.code    || 'unknown',
     user:      getCurrentUserIdentifier(),
-    userId:    currentUser ? currentUser.uid : null,
     timestamp: Date.now()
   };
-  try {
-    await db.collection('errors').add(errorEntry);
-  } catch (e) {
-    console.error('Could not save error to database', e);
-    recentErrors.unshift(errorEntry);
-    if (recentErrors.length > 50) recentErrors.pop();
-    renderErrors();
-  }
+  recentErrors.unshift(errorEntry);
+  if (recentErrors.length > 50) recentErrors.pop();
+  renderErrors();
 }
 
 async function saveGuests() {
-  if (!currentUser) return;
   try {
-    await sharedDocRef().set({ guests });
+    localStorage.setItem(GUESTS_STORAGE_KEY, JSON.stringify(guests));
   } catch (e) {
     console.error('Failed to save guests', e);
     const msg = '⚠️ Save failed: ' + (e.message || 'Please try again');
     showSaveToast(msg);
-    await saveError('saveGuests', e);
+    saveError('saveGuests', e);
   }
 }
 
 // ── UI helpers ─────────────────────────────────────────────────────
-const loginScreen  = document.getElementById('login-screen');
 const appEl        = document.getElementById('app');
 const loadingEl    = document.getElementById('loading-overlay');
-const loginErrorEl = document.getElementById('login-error');
 
 function showLoading() { loadingEl.style.display = 'flex'; }
 function hideLoading() { loadingEl.style.display = 'none'; }
@@ -1675,20 +1589,6 @@ function timeAgo(ts) {
   if (secs < 86400) return Math.floor(secs / 3600) + 'h ago';
   const d = new Date(ts);
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-// ── Error listener & renderer ──────────────────────────────────────
-function subscribeToErrors() {
-  if (unsubscribeErrors) { unsubscribeErrors(); unsubscribeErrors = null; }
-  unsubscribeErrors = db.collection('errors')
-    .orderBy('timestamp', 'desc')
-    .limit(50)
-    .onSnapshot(snap => {
-      recentErrors = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
-      renderErrors();
-    }, err => {
-      console.error('Errors listener failed', err);
-    });
 }
 
 function renderErrors() {
@@ -1710,72 +1610,18 @@ function renderErrors() {
   `).join('');
 }
 
-// ── Authentication ─────────────────────────────────────────────────
-async function signInWithGoogle() {
-  loginErrorEl.textContent = '';
-  document.getElementById('login-btn').disabled = true;
-  try {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    await auth.signInWithPopup(provider);
-  } catch (e) {
-    loginErrorEl.textContent = 'Sign-in failed. Please try again.';
-    document.getElementById('login-btn').disabled = false;
-  }
-}
-
-function showApp(user) {
+function showApp() {
   showLoading();
   loadUserPrefs();
-  subscribeToGuests(() => {
-    hideLoading();
-    loginScreen.style.display = 'none';
-    appEl.style.display = 'flex';
-    document.getElementById('fab-wrap').style.display = 'flex';
-  });
-  subscribeToErrors();
+  loadGuests();
+  renderAll();
+  hideLoading();
+  appEl.style.display = 'flex';
+  document.getElementById('fab-wrap').style.display = 'flex';
 }
 
-function showLogin() {
-  if (unsubscribeSnapshot) {
-    unsubscribeSnapshot();
-    unsubscribeSnapshot = null;
-  }
-  if (unsubscribeErrors) {
-    unsubscribeErrors();
-    unsubscribeErrors = null;
-  }
-  recentErrors = [];
-  userPrefs = { visibleStats: Object.assign({}, DEFAULT_STAT_PREFS), customStats: [] };
-  searchQuery = '';
-  document.getElementById('search-input').value = '';
-  document.getElementById('search-clear').classList.remove('visible');
-  document.getElementById('search-bar').classList.remove('visible');
-  appEl.style.display = 'none';
-  document.getElementById('fab-wrap').style.display = 'none';
-  loginScreen.style.display = 'flex';
-  loginErrorEl.textContent = '';
-  const loginBtn = document.getElementById('login-btn');
-  if (loginBtn) loginBtn.disabled = false;
-  guests = [];
-}
+showApp();
 
-// Show loading while Firebase resolves auth state
-showLoading();
-
-// Listen for auth state changes
-auth.onAuthStateChanged(user => {
-  if (user) {
-    currentUser = user;
-    showApp(user);
-  } else {
-    currentUser = null;
-    hideLoading();
-    showLogin();
-  }
-});
-
-document.getElementById('login-btn').addEventListener('click', signInWithGoogle);
-document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
 document.getElementById('activity-btn').addEventListener('click', () => openModal('modal-activity'));
 document.getElementById('modal-activity').addEventListener('click', e => {
   if (e.target === document.getElementById('modal-activity')) closeModal('modal-activity');
@@ -1887,9 +1733,7 @@ document.querySelectorAll('[data-sort-btn]').forEach(btn => {
 
 /* ── User Stat Preferences ───────────────────────────────────────── */
 function loadUserPrefs() {
-  if (!currentUser) return;
-  const key = 'statPrefs_' + currentUser.uid;
-  const stored = localStorage.getItem(key);
+  const stored = localStorage.getItem(STAT_PREFS_STORAGE_KEY);
   if (stored) {
     try {
       const parsed = JSON.parse(stored);
@@ -1906,9 +1750,7 @@ function loadUserPrefs() {
 }
 
 function saveUserPrefs() {
-  if (!currentUser) return;
-  const key = 'statPrefs_' + currentUser.uid;
-  localStorage.setItem(key, JSON.stringify(userPrefs));
+  localStorage.setItem(STAT_PREFS_STORAGE_KEY, JSON.stringify(userPrefs));
 }
 
 function applyStatPrefs() {
@@ -2508,19 +2350,12 @@ function closeFab() {
     if (!ptrTriggered || ptrRefreshing) return;
     ptrTriggered = false;
     ptrRefreshing = true;
-    if (currentUser && unsubscribeSnapshot) {
-      unsubscribeSnapshot();
-      unsubscribeSnapshot = null;
-      subscribeToGuests(() => setTimeout(() => {
-        ptrEl.classList.remove('visible');
-        ptrRefreshing = false;
-      }, 400));
-    } else {
-      setTimeout(() => {
-        ptrEl.classList.remove('visible');
-        ptrRefreshing = false;
-      }, 400);
-    }
+    loadGuests();
+    renderAll();
+    setTimeout(() => {
+      ptrEl.classList.remove('visible');
+      ptrRefreshing = false;
+    }, 400);
   });
 })();
 </script>
