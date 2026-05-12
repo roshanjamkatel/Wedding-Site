@@ -1508,6 +1508,8 @@
 const GUESTS_STORAGE_KEY = 'weddingGuestList';
 const STAT_PREFS_STORAGE_KEY = 'statPrefs_local';
 const DEVICE_ID_STORAGE_KEY = 'weddingDeviceId';
+const DEVICE_ID_DISPLAY_LENGTH = 8;
+const MAX_RECENT_ERRORS = 50;
 
 // ── Helpers ────────────────────────────────────────────────────────
 function uid() {
@@ -1530,8 +1532,8 @@ function getCurrentUserIdentifier() {
       deviceId = uid();
       localStorage.setItem(DEVICE_ID_STORAGE_KEY, deviceId);
     }
-    return `Device ${deviceId.slice(0, 8)}`;
-  } catch (_e) {
+    return `Device ${deviceId.slice(0, DEVICE_ID_DISPLAY_LENGTH)}`;
+  } catch (error) {
     return 'Device (localStorage unavailable)';
   }
 }
@@ -1555,8 +1557,8 @@ function loadGuests() {
       try {
         localStorage.setItem(`${GUESTS_STORAGE_KEY}_backup`, stored);
         backupSaved = true;
-      } catch (_backupErr) {
-        console.error('Failed to back up corrupted guest data', _backupErr);
+      } catch (backupError) {
+        console.error('Failed to back up corrupted guest data', backupError);
       }
     }
     guests = [];
@@ -1586,7 +1588,7 @@ function saveError(operation, error) {
     timestamp: Date.now()
   };
   recentErrors.unshift(errorEntry);
-  if (recentErrors.length > 50) recentErrors.pop();
+  if (recentErrors.length > MAX_RECENT_ERRORS) recentErrors.pop();
   renderErrors();
 }
 
