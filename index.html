@@ -518,6 +518,21 @@
       max-width: var(--guest-chip-max-width);
     }
 
+    @media (max-width: 640px) {
+      .guest-card {
+        width: 100%;
+      }
+
+      .guest-info {
+        flex: 1 1 auto;
+      }
+
+      .guest-name,
+      .guest-meta {
+        max-width: none;
+      }
+    }
+
     .toggle-switch {
       position: relative;
       width: 44px;
