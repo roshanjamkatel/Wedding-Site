@@ -1507,6 +1507,7 @@
 
 const GUESTS_STORAGE_KEY = 'weddingGuestList';
 const STAT_PREFS_STORAGE_KEY = 'statPrefs_local';
+const DEVICE_ID_STORAGE_KEY = 'weddingDeviceId';
 
 // ── Helpers ────────────────────────────────────────────────────────
 function uid() {
@@ -1523,7 +1524,16 @@ function escHtml(s) {
 }
 
 function getCurrentUserIdentifier() {
-  return 'Local device';
+  try {
+    let deviceId = localStorage.getItem(DEVICE_ID_STORAGE_KEY);
+    if (!deviceId) {
+      deviceId = uid();
+      localStorage.setItem(DEVICE_ID_STORAGE_KEY, deviceId);
+    }
+    return `Device ${deviceId.slice(0, 8)}`;
+  } catch (_e) {
+    return 'Device unknown';
+  }
 }
 
 // ── State ──────────────────────────────────────────────────────────
@@ -1541,6 +1551,8 @@ function loadGuests() {
   } catch (e) {
     guests = [];
     console.error('Failed to load guests', e);
+    showSaveToast('⚠️ Saved guest data is corrupted and could not be loaded.');
+    saveError('loadGuests', e);
   }
 }
 

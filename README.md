@@ -17,4 +17,5 @@ After that, every push to `main` deploys the site automatically.
 
 ## Data storage
 
-Guest data is stored in the browser using `localStorage` (single-device persistence).
+Guest data is stored in the browser using `localStorage`.
+This is **single-device only** storage (no account login and no cross-device sync).
