@@ -1534,7 +1534,7 @@ function getCurrentUserIdentifier() {
     }
     return `Device ${deviceId.slice(0, DEVICE_ID_DISPLAY_LENGTH)}`;
   } catch (error) {
-    return 'Device (localStorage unavailable)';
+    return 'Device (storage unavailable - tracking disabled)';
   }
 }
 
@@ -1565,7 +1565,7 @@ function loadGuests() {
     console.error('Failed to load guests', e);
     showSaveToast(
       backupSaved
-        ? '⚠️ Saved guest data is corrupted and could not be loaded. A backup was saved, and the app started with an empty guest list.'
+        ? `⚠️ Saved guest data is corrupted and could not be loaded. A backup was saved to localStorage key "${GUESTS_STORAGE_KEY}_backup", and the app started with an empty guest list.`
         : '⚠️ Saved guest data is corrupted and could not be loaded. The app started with an empty guest list.'
     );
     saveError('loadGuests', e);
