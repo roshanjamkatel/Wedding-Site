@@ -18,6 +18,7 @@
       --text-s:    #7a6861;
       --border:    #ede0d8;
       --danger:    #c0392b;
+      --desktop-link-underline: rgba(155,126,110,.45);
       --radius:    14px;
       --shadow:    0 2px 16px rgba(0,0,0,.08);
       --guest-chip-max-width: 200px;
@@ -1171,7 +1172,7 @@
 
       .guest-list {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
         gap: 12px;
       }
 
@@ -1213,7 +1214,7 @@
       }
 
       .guest-name-link {
-        text-decoration-color: rgba(155,126,110,.45);
+        text-decoration-color: var(--desktop-link-underline);
       }
 
       .guest-name-link:hover {
