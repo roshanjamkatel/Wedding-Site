@@ -18,6 +18,7 @@
       --text-s:    #7a6861;
       --border:    #ede0d8;
       --danger:    #c0392b;
+      --desktop-link-underline: rgba(155,126,110,.45);
       --radius:    14px;
       --shadow:    0 2px 16px rgba(0,0,0,.08);
       --guest-chip-max-width: 200px;
@@ -1107,6 +1108,118 @@
       background: var(--primary);
       color: #fff;
       border-color: var(--primary);
+    }
+
+    /* ── Desktop-only layout refinements (keep mobile unchanged) ───── */
+    @media (min-width: 1024px) {
+      body {
+        padding: 18px;
+        background: linear-gradient(140deg, #f7ebe3 0%, #fdf8f4 42%);
+      }
+
+      #app {
+        max-width: 1380px;
+        margin: 0 auto;
+        min-height: calc(100dvh - 36px);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 12px 38px rgba(58, 46, 40, .12);
+      }
+
+      .app-header {
+        padding: 18px 24px 14px;
+      }
+
+      .app-header h1 {
+        font-size: 1.35rem;
+      }
+
+      .tab-bar {
+        top: 69px;
+      }
+
+      #search-bar {
+        top: 113px;
+        padding: 10px 16px;
+      }
+
+      .tab-content {
+        padding: 18px 20px 120px;
+      }
+
+      .filter-row {
+        overflow: visible;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 16px;
+        padding: 10px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--surface);
+      }
+
+      .chip {
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: .82rem;
+      }
+
+      .chip.sort-chip {
+        margin-left: auto;
+        border-style: solid;
+      }
+
+      .guest-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 12px;
+      }
+
+      .guest-card {
+        width: 100%;
+        border-radius: 12px;
+        padding: 10px 12px;
+        gap: 12px;
+        box-shadow: none;
+        border: 1.5px solid var(--border);
+      }
+
+      .guest-card:hover {
+        box-shadow: 0 3px 14px rgba(0,0,0,.08);
+      }
+
+      .guest-info {
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      .guest-name {
+        max-width: none;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        line-height: 1.25;
+        font-size: .95rem;
+      }
+
+      .guest-meta {
+        max-width: none;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        line-height: 1.3;
+        margin-top: 3px;
+        font-size: .74rem;
+      }
+
+      .guest-name-link {
+        text-decoration-color: var(--desktop-link-underline);
+      }
+
+      .guest-name-link:hover {
+        text-decoration-color: var(--primary);
+      }
     }
   </style>
 </head>
