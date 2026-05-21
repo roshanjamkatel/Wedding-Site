@@ -1571,7 +1571,7 @@
     <div class="pref-item">
       <div class="pref-item-label">
         <span>Roshan's Invitees</span>
-        <span class="pref-desc">Roshan's side, adults only</span>
+        <span class="pref-desc">Roshan's side, including kids</span>
       </div>
       <label class="toggle-switch">
         <input type="checkbox" id="pref-roshan" checked />
@@ -1581,7 +1581,7 @@
     <div class="pref-item">
       <div class="pref-item-label">
         <span>Anuja's Invitees</span>
-        <span class="pref-desc">Anuja's side, adults only</span>
+        <span class="pref-desc">Anuja's side, including kids</span>
       </div>
       <label class="toggle-switch">
         <input type="checkbox" id="pref-anuja" checked />
@@ -2196,8 +2196,8 @@ function renderEventTab(event) {
 
   // Stats
   const totalCount  = guests.filter(g => g.events.includes(event)).length;
-  const roshanCount = guests.filter(g => g.events.includes(event) && g.side === 'roshan' && !g.isKid).length;
-  const anujaCount  = guests.filter(g => g.events.includes(event) && g.side === 'anuja'  && !g.isKid).length;
+  const roshanCount = guests.filter(g => g.events.includes(event) && g.side === 'roshan').length;
+  const anujaCount  = guests.filter(g => g.events.includes(event) && g.side === 'anuja').length;
   const kidCount    = guests.filter(g => g.events.includes(event) && g.isKid).length;
 
   const idMap = { wedding: 'w', reception: 'r', engagement: 'e' };
@@ -2276,8 +2276,8 @@ function renderAllGuests() {
   list = sortByName(list);
 
   const allTotal  = guests.length;
-  const allRoshan = guests.filter(g => g.side === 'roshan' && !g.isKid).length;
-  const allAnuja  = guests.filter(g => g.side === 'anuja'  && !g.isKid).length;
+  const allRoshan = guests.filter(g => g.side === 'roshan').length;
+  const allAnuja  = guests.filter(g => g.side === 'anuja').length;
   const allKids   = guests.filter(g => g.isKid).length;
   document.getElementById('all-count').textContent = allTotal;
   document.getElementById('g-total').textContent   = allTotal;
