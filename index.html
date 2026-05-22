@@ -1968,8 +1968,7 @@ function toggleFilterSelection(key, value) {
     return;
   }
   selected.delete('all');
-  if (selected.has(value)) selected.delete(value);
-  else selected.add(value);
+  if (!selected.delete(value)) selected.add(value);
   // Keep at least one active filter for a stable UX; fallback to "All" when none remain.
   activeFilters[key] = selected.size ? Array.from(selected) : ['all'];
 }
@@ -2250,14 +2249,14 @@ function renderEventTab(event) {
   const container = document.getElementById('list-' + event);
 
   // Stats
-  const totalCount  = list.length;
+  const displayedCount = list.length;
   const roshanCount = list.filter(g => g.side === 'roshan').length;
   const anujaCount  = list.filter(g => g.side === 'anuja').length;
   const kidCount    = list.filter(g => g.isKid).length;
 
   const idMap = { wedding: 'w', reception: 'r', engagement: 'e' };
   const p = idMap[event];
-  document.getElementById(p + '-total').textContent  = totalCount;
+  document.getElementById(p + '-total').textContent  = displayedCount;
   document.getElementById(p + '-roshan').textContent = roshanCount;
   document.getElementById(p + '-anuja').textContent  = anujaCount;
   document.getElementById(p + '-kids').textContent   = kidCount;
@@ -2326,12 +2325,12 @@ function renderAllGuests() {
 
   list = sortByName(list);
 
-  const allTotal  = list.length;
+  const displayedTotal = list.length;
   const allRoshan = list.filter(g => g.side === 'roshan').length;
   const allAnuja  = list.filter(g => g.side === 'anuja').length;
   const allKids   = list.filter(g => g.isKid).length;
-  document.getElementById('all-count').textContent = allTotal;
-  document.getElementById('g-total').textContent   = allTotal;
+  document.getElementById('all-count').textContent = displayedTotal;
+  document.getElementById('g-total').textContent   = displayedTotal;
   document.getElementById('g-roshan').textContent  = allRoshan;
   document.getElementById('g-anuja').textContent   = allAnuja;
   document.getElementById('g-kids').textContent    = allKids;
