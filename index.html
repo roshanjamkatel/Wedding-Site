@@ -1968,7 +1968,8 @@ function toggleFilterSelection(key, value) {
     return;
   }
   selected.delete('all');
-  if (!selected.delete(value)) selected.add(value);
+  if (selected.has(value)) selected.delete(value);
+  else selected.add(value);
   // Keep at least one active filter for a stable UX; fallback to "All" when none remain.
   activeFilters[key] = selected.size ? Array.from(selected) : ['all'];
 }
