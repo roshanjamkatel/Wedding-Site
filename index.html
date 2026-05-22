@@ -1300,6 +1300,7 @@
       <button class="chip" data-event="wedding" data-filter="anuja">Anuja's Side</button>
       <button class="chip" data-event="wedding" data-filter="invited">Invited ✓</button>
       <button class="chip" data-event="wedding" data-filter="notinvited">Not Invited</button>
+      <button class="chip" data-event="wedding" data-filter="kids">Kids</button>
       <button class="chip sort-chip" data-sort-btn title="Sort by name">A → Z</button>
     </div>
     <div class="guest-list" id="list-wedding"></div>
@@ -1320,6 +1321,7 @@
       <button class="chip" data-event="reception" data-filter="anuja">Anuja's Side</button>
       <button class="chip" data-event="reception" data-filter="invited">Invited ✓</button>
       <button class="chip" data-event="reception" data-filter="notinvited">Not Invited</button>
+      <button class="chip" data-event="reception" data-filter="kids">Kids</button>
       <button class="chip sort-chip" data-sort-btn title="Sort by name">A → Z</button>
     </div>
     <div class="guest-list" id="list-reception"></div>
@@ -1340,6 +1342,7 @@
       <button class="chip" data-event="engagement" data-filter="anuja">Anuja's Side</button>
       <button class="chip" data-event="engagement" data-filter="invited">Invited ✓</button>
       <button class="chip" data-event="engagement" data-filter="notinvited">Not Invited</button>
+      <button class="chip" data-event="engagement" data-filter="kids">Kids</button>
       <button class="chip sort-chip" data-sort-btn title="Sort by name">A → Z</button>
     </div>
     <div class="guest-list" id="list-engagement"></div>
@@ -1950,8 +1953,67 @@ statsPrefsModal.addEventListener('click', e => {
 
 /* ── Tabs ────────────────────────────────────────────────────────── */
 let activeTab = 'wedding';
-const activeFilters = { wedding: 'all', reception: 'all', engagement: 'all', guests: 'all' };
+const activeFilters = { wedding: ['all'], reception: ['all'], engagement: ['all'], guests: ['all'] };
 let nameSortDir = 'asc'; // 'asc' | 'desc'
+
+function getSelectedFilters(key) {
+  const value = activeFilters[key];
+  return Array.isArray(value) && value.length ? value : ['all'];
+}
+
+function toggleFilterSelection(key, value) {
+  const selected = new Set(getSelectedFilters(key));
+  if (value === 'all') {
+    activeFilters[key] = ['all'];
+    return;
+  }
+  selected.delete('all');
+  if (selected.has(value)) selected.delete(value);
+  else selected.add(value);
+  // Keep at least one active filter for a stable UX; fallback to "All" when none remain.
+  activeFilters[key] = selected.size ? Array.from(selected) : ['all'];
+}
+
+function syncEventFilterChips(event) {
+  const selected = new Set(getSelectedFilters(event));
+  document.querySelectorAll(`.chip[data-event="${event}"][data-filter]`).forEach(chip => {
+    chip.classList.toggle('active', selected.has(chip.dataset.filter));
+  });
+}
+
+function syncGuestFilterChips() {
+  const selected = new Set(getSelectedFilters('guests'));
+  document.querySelectorAll('.chip[data-gfilter]').forEach(chip => {
+    chip.classList.toggle('active', selected.has(chip.dataset.gfilter));
+  });
+}
+
+function guestMatchesFilters(g, selected) {
+  if (selected.has('all')) return true;
+  const hasSideFilter = selected.has('roshan') || selected.has('anuja');
+  const hasAgeFilter = selected.has('adults') || selected.has('kids');
+  const sideMatch = !hasSideFilter
+    || (selected.has('roshan') && g.side === 'roshan')
+    || (selected.has('anuja') && g.side === 'anuja');
+  const ageMatch = !hasAgeFilter
+    || (selected.has('adults') && !g.isKid)
+    || (selected.has('kids') && g.isKid);
+  return sideMatch && ageMatch;
+}
+
+function eventGuestMatchesFilters(g, event, selected) {
+  if (selected.has('all')) return true;
+  const hasSideFilter = selected.has('roshan') || selected.has('anuja');
+  const hasInviteFilter = selected.has('invited') || selected.has('notinvited');
+  const sideMatch = !hasSideFilter
+    || (selected.has('roshan') && g.side === 'roshan')
+    || (selected.has('anuja') && g.side === 'anuja');
+  const inviteMatch = !hasInviteFilter
+    || (selected.has('invited') && g.events.includes(event))
+    || (selected.has('notinvited') && !g.events.includes(event));
+  const kidsMatch = !selected.has('kids') || g.isKid;
+  return sideMatch && inviteMatch && kidsMatch;
+}
 
 function updateSortBtns() {
   const label = nameSortDir === 'asc' ? 'A → Z' : 'Z → A';
@@ -1973,18 +2035,16 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 document.querySelectorAll('.chip[data-filter]').forEach(chip => {
   chip.addEventListener('click', () => {
     const event = chip.dataset.event;
-    document.querySelectorAll(`.chip[data-event="${event}"]`).forEach(c => c.classList.remove('active'));
-    chip.classList.add('active');
-    activeFilters[event] = chip.dataset.filter;
+    toggleFilterSelection(event, chip.dataset.filter);
+    syncEventFilterChips(event);
     renderEventTab(event);
   });
 });
 
 document.querySelectorAll('.chip[data-gfilter]').forEach(chip => {
   chip.addEventListener('click', () => {
-    document.querySelectorAll('.chip[data-gfilter]').forEach(c => c.classList.remove('active'));
-    chip.classList.add('active');
-    activeFilters.guests = chip.dataset.gfilter;
+    toggleFilterSelection('guests', chip.dataset.gfilter);
+    syncGuestFilterChips();
     renderAllGuests();
   });
 });
@@ -2177,13 +2237,8 @@ function renderAll() {
 }
 
 function renderEventTab(event) {
-  const filter = activeFilters[event] || 'all';
-  let list = guests;
-
-  if (filter === 'roshan')          list = guests.filter(g => g.side === 'roshan');
-  else if (filter === 'anuja')      list = guests.filter(g => g.side === 'anuja');
-  else if (filter === 'invited')    list = guests.filter(g => g.events.includes(event));
-  else if (filter === 'notinvited') list = guests.filter(g => !g.events.includes(event));
+  const selectedFilters = new Set(getSelectedFilters(event));
+  let list = guests.filter(g => eventGuestMatchesFilters(g, event, selectedFilters));
 
   if (searchQuery) {
     const q = searchQuery.toLowerCase();
@@ -2195,14 +2250,14 @@ function renderEventTab(event) {
   const container = document.getElementById('list-' + event);
 
   // Stats
-  const totalCount  = guests.filter(g => g.events.includes(event)).length;
-  const roshanCount = guests.filter(g => g.events.includes(event) && g.side === 'roshan').length;
-  const anujaCount  = guests.filter(g => g.events.includes(event) && g.side === 'anuja').length;
-  const kidCount    = guests.filter(g => g.events.includes(event) && g.isKid).length;
+  const displayedCount = list.length;
+  const roshanCount = list.filter(g => g.side === 'roshan').length;
+  const anujaCount  = list.filter(g => g.side === 'anuja').length;
+  const kidCount    = list.filter(g => g.isKid).length;
 
   const idMap = { wedding: 'w', reception: 'r', engagement: 'e' };
   const p = idMap[event];
-  document.getElementById(p + '-total').textContent  = totalCount;
+  document.getElementById(p + '-total').textContent  = displayedCount;
   document.getElementById(p + '-roshan').textContent = roshanCount;
   document.getElementById(p + '-anuja').textContent  = anujaCount;
   document.getElementById(p + '-kids').textContent   = kidCount;
@@ -2261,12 +2316,8 @@ function renderEventTab(event) {
 }
 
 function renderAllGuests() {
-  const filter = activeFilters.guests;
-  let list = guests;
-  if (filter === 'roshan')  list = guests.filter(g => g.side === 'roshan');
-  else if (filter === 'anuja')  list = guests.filter(g => g.side === 'anuja');
-  else if (filter === 'adults') list = guests.filter(g => !g.isKid);
-  else if (filter === 'kids')   list = guests.filter(g => g.isKid);
+  const selectedFilters = new Set(getSelectedFilters('guests'));
+  let list = guests.filter(g => guestMatchesFilters(g, selectedFilters));
 
   if (searchQuery) {
     const q = searchQuery.toLowerCase();
@@ -2275,12 +2326,12 @@ function renderAllGuests() {
 
   list = sortByName(list);
 
-  const allTotal  = guests.length;
-  const allRoshan = guests.filter(g => g.side === 'roshan').length;
-  const allAnuja  = guests.filter(g => g.side === 'anuja').length;
-  const allKids   = guests.filter(g => g.isKid).length;
-  document.getElementById('all-count').textContent = allTotal;
-  document.getElementById('g-total').textContent   = allTotal;
+  const displayedTotal = list.length;
+  const allRoshan = list.filter(g => g.side === 'roshan').length;
+  const allAnuja  = list.filter(g => g.side === 'anuja').length;
+  const allKids   = list.filter(g => g.isKid).length;
+  document.getElementById('all-count').textContent = displayedTotal;
+  document.getElementById('g-total').textContent   = displayedTotal;
   document.getElementById('g-roshan').textContent  = allRoshan;
   document.getElementById('g-anuja').textContent   = allAnuja;
   document.getElementById('g-kids').textContent    = allKids;
@@ -2329,10 +2380,8 @@ function deleteGuest(id) {
 }
 
 function exportGuestsCSV() {
-  const filter = activeFilters.guests;
-  let list = guests;
-  if (filter === 'roshan') list = guests.filter(g => g.side === 'roshan');
-  else if (filter === 'anuja') list = guests.filter(g => g.side === 'anuja');
+  const selectedFilters = new Set(getSelectedFilters('guests'));
+  const list = guests.filter(g => guestMatchesFilters(g, selectedFilters));
 
   const rows = [['Name', 'Type', 'Side', 'Wedding', 'Reception', 'Engagement']];
   list.forEach(g => {
