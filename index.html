@@ -1301,6 +1301,7 @@
       <button class="chip" data-event="wedding" data-filter="invited">Invited ✓</button>
       <button class="chip" data-event="wedding" data-filter="notinvited">Not Invited</button>
       <button class="chip" data-event="wedding" data-filter="kids">Kids</button>
+      <button class="chip" data-event="wedding" data-filter="mutual">⭐ Mutual</button>
       <button class="chip sort-chip" data-sort-btn title="Sort by name">A → Z</button>
     </div>
     <div class="guest-list" id="list-wedding"></div>
@@ -1322,6 +1323,7 @@
       <button class="chip" data-event="reception" data-filter="invited">Invited ✓</button>
       <button class="chip" data-event="reception" data-filter="notinvited">Not Invited</button>
       <button class="chip" data-event="reception" data-filter="kids">Kids</button>
+      <button class="chip" data-event="reception" data-filter="mutual">⭐ Mutual</button>
       <button class="chip sort-chip" data-sort-btn title="Sort by name">A → Z</button>
     </div>
     <div class="guest-list" id="list-reception"></div>
@@ -1343,6 +1345,7 @@
       <button class="chip" data-event="engagement" data-filter="invited">Invited ✓</button>
       <button class="chip" data-event="engagement" data-filter="notinvited">Not Invited</button>
       <button class="chip" data-event="engagement" data-filter="kids">Kids</button>
+      <button class="chip" data-event="engagement" data-filter="mutual">⭐ Mutual</button>
       <button class="chip sort-chip" data-sort-btn title="Sort by name">A → Z</button>
     </div>
     <div class="guest-list" id="list-engagement"></div>
@@ -2031,6 +2034,7 @@ function eventGuestMatchesFilters(g, event, selected) {
   if (selected.has('all')) return true;
   const hasSideFilter = selected.has('roshan') || selected.has('anuja');
   const hasInviteFilter = selected.has('invited') || selected.has('notinvited');
+  const mutualMatch = !selected.has('mutual') || !!g.isMutual;
   const sideMatch = !hasSideFilter
     || (selected.has('roshan') && g.side === 'roshan')
     || (selected.has('anuja') && g.side === 'anuja');
@@ -2038,7 +2042,7 @@ function eventGuestMatchesFilters(g, event, selected) {
     || (selected.has('invited') && g.events.includes(event))
     || (selected.has('notinvited') && !g.events.includes(event));
   const kidsMatch = !selected.has('kids') || g.isKid;
-  return sideMatch && inviteMatch && kidsMatch;
+  return sideMatch && inviteMatch && kidsMatch && mutualMatch;
 }
 
 function updateSortBtns() {
