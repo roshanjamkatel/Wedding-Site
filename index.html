@@ -1363,6 +1363,7 @@
         <div class="stat-pill" data-stat="kids"><div class="num" id="g-kids">0</div><div class="lbl">Kids</div></div>
         <div class="stat-pill" data-stat="roshan"><div class="num" id="g-roshan">0</div><div class="lbl">Roshan</div></div>
         <div class="stat-pill" data-stat="anuja"><div class="num" id="g-anuja">0</div><div class="lbl">Anuja</div></div>
+        <div class="stat-pill" data-stat="mutual"><div class="num" id="g-mutual">0</div><div class="lbl">⭐ Mutual</div></div>
       </div>
       <div class="stats-bar custom-stats-bar" id="custom-bar-guests"></div>
       <div class="filter-row">
@@ -1371,6 +1372,7 @@
         <button class="chip" data-gfilter="kids">Kids</button>
         <button class="chip" data-gfilter="roshan">Roshan's</button>
         <button class="chip" data-gfilter="anuja">Anuja's</button>
+        <button class="chip" data-gfilter="mutual">⭐ Mutual</button>
         <button class="chip sort-chip" data-sort-btn title="Sort by name">A → Z</button>
       </div>
       <div class="guest-list" id="list-all"></div>
@@ -1440,6 +1442,12 @@
           <input type="checkbox" id="add-ev-engagement" value="engagement" />
           <label for="add-ev-engagement">💍 Engagement</label>
         </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="event-check">
+        <input type="checkbox" id="add-is-mutual" />
+        <label for="add-is-mutual">⭐ Mutual friend (both sides know them)</label>
       </div>
     </div>
     <div class="modal-actions">
@@ -1539,6 +1547,12 @@
         </div>
       </div>
     </div>
+    <div class="form-group">
+      <div class="event-check">
+        <input type="checkbox" id="edit-is-mutual" />
+        <label for="edit-is-mutual">⭐ Mutual friend (both sides know them)</label>
+      </div>
+    </div>
     <div class="modal-actions">
       <button class="btn-secondary" id="modal-edit-cancel">Cancel</button>
       <button class="btn-primary"   id="modal-edit-save">Save</button>
@@ -1591,6 +1605,16 @@
         <span class="toggle-slider"></span>
       </label>
     </div>
+    <div class="pref-item">
+      <div class="pref-item-label">
+        <span>⭐ Mutual</span>
+        <span class="pref-desc">Guests known by both sides</span>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="pref-mutual" checked />
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
     <div class="custom-stats-section">
       <h4>Custom Stats</h4>
       <div id="custom-stat-items"></div>
@@ -1604,6 +1628,7 @@
             <option value="invited_all">All 3 Events</option>
             <option value="roshan_kids">Roshan's Kids</option>
             <option value="anuja_kids">Anuja's Kids</option>
+            <option value="mutual">⭐ Mutual</option>
           </select>
         </div>
         <div class="cstat-actions">
@@ -1704,7 +1729,7 @@ let unsubscribeSnapshot = null;
 let unsubscribeErrors = null;
 let recentErrors = [];
 let searchQuery = '';
-const DEFAULT_STAT_PREFS = { total: true, kids: true, roshan: true, anuja: true };
+const DEFAULT_STAT_PREFS = { total: true, kids: true, roshan: true, anuja: true, mutual: true };
 let userPrefs = { visibleStats: Object.assign({}, DEFAULT_STAT_PREFS), customStats: [] };
 
 function sharedDocRef() {
@@ -1943,7 +1968,7 @@ statsPrefsModal.addEventListener('click', e => {
   if (e.target === statsPrefsModal) statsPrefsModal.style.display = 'none';
 });
 
-['total', 'kids', 'roshan', 'anuja'].forEach(stat => {
+['total', 'kids', 'roshan', 'anuja', 'mutual'].forEach(stat => {
   document.getElementById('pref-' + stat).addEventListener('change', function () {
     userPrefs.visibleStats[stat] = this.checked;
     saveUserPrefs();
@@ -1992,13 +2017,14 @@ function guestMatchesFilters(g, selected) {
   if (selected.has('all')) return true;
   const hasSideFilter = selected.has('roshan') || selected.has('anuja');
   const hasAgeFilter = selected.has('adults') || selected.has('kids');
+  const mutualMatch = !selected.has('mutual') || !!g.isMutual;
   const sideMatch = !hasSideFilter
     || (selected.has('roshan') && g.side === 'roshan')
     || (selected.has('anuja') && g.side === 'anuja');
   const ageMatch = !hasAgeFilter
     || (selected.has('adults') && !g.isKid)
     || (selected.has('kids') && g.isKid);
-  return sideMatch && ageMatch;
+  return sideMatch && ageMatch && mutualMatch;
 }
 
 function eventGuestMatchesFilters(g, event, selected) {
@@ -2085,7 +2111,7 @@ function saveUserPrefs() {
 }
 
 function applyStatPrefs() {
-  ['total', 'kids', 'roshan', 'anuja'].forEach(stat => {
+  ['total', 'kids', 'roshan', 'anuja', 'mutual'].forEach(stat => {
     const show = userPrefs.visibleStats[stat] !== false;
     document.querySelectorAll(`.stat-pill[data-stat="${stat}"]`).forEach(el => {
       el.classList.toggle('stat-hidden', !show);
@@ -2101,7 +2127,8 @@ const CUSTOM_STAT_TYPE_LABELS = {
   not_invited: 'Not Invited',
   invited_all: 'All 3 Events',
   roshan_kids: "Roshan's Kids",
-  anuja_kids:  "Anuja's Kids"
+  anuja_kids:  "Anuja's Kids",
+  mutual:      '⭐ Mutual'
 };
 
 function computeCustomStatValue(filterType, event) {
@@ -2118,6 +2145,9 @@ function computeCustomStatValue(filterType, event) {
       return guests.filter(g => g.side === 'roshan' && g.isKid).length;
     case 'anuja_kids':
       return guests.filter(g => g.side === 'anuja' && g.isKid).length;
+    case 'mutual':
+      if (event === 'guests') return guests.filter(g => g.isMutual).length;
+      return guests.filter(g => g.isMutual && g.events.includes(event)).length;
     default:
       return 0;
   }
@@ -2254,6 +2284,7 @@ function renderEventTab(event) {
   const roshanCount = list.filter(g => g.side === 'roshan').length;
   const anujaCount  = list.filter(g => g.side === 'anuja').length;
   const kidCount    = list.filter(g => g.isKid).length;
+  const mutualMeta  = g => `${g.side === 'roshan' ? "Roshan's side" : "Anuja's side"}${g.isKid ? ' &middot; 👶 Kid' : ''}${g.isMutual ? ' &middot; ⭐ Mutual' : ''}`;
 
   const idMap = { wedding: 'w', reception: 'r', engagement: 'e' };
   const p = idMap[event];
@@ -2278,7 +2309,7 @@ function renderEventTab(event) {
         <div class="avatar ${g.side}">${initials(g.name)}</div>
         <div class="guest-info">
           <div class="guest-name guest-name-link" data-edit="${g.id}" title="Edit guest">${escHtml(g.name)}</div>
-          <div class="guest-meta">${g.side === 'roshan' ? "Roshan's side" : "Anuja's side"}${g.isKid ? ' &middot; 👶 Kid' : ''}</div>
+          <div class="guest-meta">${mutualMeta(g)}</div>
         </div>
         <label class="toggle-switch" title="${invited ? 'Remove from event' : 'Add to event'}">
           <input type="checkbox" ${invited ? 'checked' : ''} data-gid="${g.id}" data-ev="${event}" />
@@ -2330,11 +2361,13 @@ function renderAllGuests() {
   const allRoshan = list.filter(g => g.side === 'roshan').length;
   const allAnuja  = list.filter(g => g.side === 'anuja').length;
   const allKids   = list.filter(g => g.isKid).length;
+  const allMutual = list.filter(g => g.isMutual).length;
   document.getElementById('all-count').textContent = displayedTotal;
   document.getElementById('g-total').textContent   = displayedTotal;
   document.getElementById('g-roshan').textContent  = allRoshan;
   document.getElementById('g-anuja').textContent   = allAnuja;
   document.getElementById('g-kids').textContent    = allKids;
+  document.getElementById('g-mutual').textContent  = allMutual;
 
   updateCustomStatValues('guests');
 
@@ -2355,7 +2388,7 @@ function renderAllGuests() {
       <div class="guest-info">
         <div class="guest-name guest-name-link" data-edit="${g.id}" title="Edit guest">${escHtml(g.name)}</div>
         <div class="guest-meta">
-          ${g.side === 'roshan' ? "Roshan's side" : "Anuja's side"}${g.isKid ? ' &middot; 👶 Kid' : ''} &middot;
+        ${g.side === 'roshan' ? "Roshan's side" : "Anuja's side"}${g.isKid ? ' &middot; 👶 Kid' : ''}${g.isMutual ? ' &middot; ⭐ Mutual' : ''} &middot;
           ${['wedding','reception','engagement'].filter(e => g.events.includes(e)).map(e => eventLabels[e]).join(' ') || 'No events'}
         </div>
       </div>
@@ -2383,11 +2416,12 @@ function exportGuestsCSV() {
   const selectedFilters = new Set(getSelectedFilters('guests'));
   const list = guests.filter(g => guestMatchesFilters(g, selectedFilters));
 
-  const rows = [['Name', 'Type', 'Side', 'Wedding', 'Reception', 'Engagement']];
+  const rows = [['Name', 'Type', 'Mutual', 'Side', 'Wedding', 'Reception', 'Engagement']];
   list.forEach(g => {
     rows.push([
       g.name,
       g.isKid ? 'Kid' : 'Adult',
+      g.isMutual ? 'Yes' : 'No',
       g.side === 'roshan' ? "Roshan's" : "Anuja's",
       g.events.includes('wedding')    ? 'Yes' : 'No',
       g.events.includes('reception')  ? 'Yes' : 'No',
@@ -2460,6 +2494,7 @@ function openAddModal(side) {
   document.getElementById('add-name-error').textContent = '';
   document.getElementById('add-side').value = side || 'roshan';
   document.getElementById('add-type').value = 'adult';
+  document.getElementById('add-is-mutual').checked = false;
   document.getElementById('add-ev-wedding').checked    = true;
   document.getElementById('add-ev-reception').checked  = true;
   document.getElementById('add-ev-engagement').checked = false;
@@ -2485,10 +2520,11 @@ document.getElementById('modal-add-save').addEventListener('click', () => {
   errorEl.textContent = '';
   const side = document.getElementById('add-side').value;
   const isKid = document.getElementById('add-type').value === 'kid';
+  const isMutual = document.getElementById('add-is-mutual').checked;
   const events = ['wedding','reception','engagement'].filter(ev =>
     document.getElementById('add-ev-' + ev).checked
   );
-  guests.push({ id: uid(), name, side, isKid, events, addedBy: getCurrentUserIdentifier(), addedAt: Date.now() });
+  guests.push({ id: uid(), name, side, isKid, isMutual, events, addedBy: getCurrentUserIdentifier(), addedAt: Date.now() });
   saveGuests();
   closeModal('modal-add');
   renderAll();
@@ -2540,7 +2576,7 @@ document.getElementById('modal-bulk-save').addEventListener('click', () => {
     return;
   }
   bulkErrorEl.textContent = '';
-  toAdd.forEach(name => guests.push({ id: uid(), name, side, isKid, events, addedBy, addedAt }));
+  toAdd.forEach(name => guests.push({ id: uid(), name, side, isKid, isMutual: false, events, addedBy, addedAt }));
   saveGuests();
   closeModal('modal-bulk');
   renderAll();
@@ -2561,6 +2597,7 @@ function openEditModal(id) {
   document.getElementById('edit-name-error').textContent  = '';
   document.getElementById('edit-side').value              = g.side;
   document.getElementById('edit-type').value              = g.isKid ? 'kid' : 'adult';
+  document.getElementById('edit-is-mutual').checked       = !!g.isMutual;
   document.getElementById('edit-ev-wedding').checked    = g.events.includes('wedding');
   document.getElementById('edit-ev-reception').checked  = g.events.includes('reception');
   document.getElementById('edit-ev-engagement').checked = g.events.includes('engagement');
@@ -2588,6 +2625,7 @@ document.getElementById('modal-edit-save').addEventListener('click', () => {
   g.name   = newName;
   g.side   = document.getElementById('edit-side').value;
   g.isKid  = document.getElementById('edit-type').value === 'kid';
+  g.isMutual = document.getElementById('edit-is-mutual').checked;
   g.events = ['wedding','reception','engagement'].filter(ev =>
     document.getElementById('edit-ev-' + ev).checked
   );
@@ -2608,6 +2646,7 @@ function deduplicateGuests() {
       g.events.forEach(ev => {
         if (!existing.events.includes(ev)) existing.events.push(ev);
       });
+      existing.isMutual = !!existing.isMutual || !!g.isMutual;
       toRemove.push(g.id);
     } else {
       seen.set(key, g);
